@@ -16,29 +16,6 @@ const registerSchema = z.object({
   password: z.string().min(6, "Şifre en az 6 karakter olmalı").max(100),
 });
 
-function mailFailMessage(mail: {
-  skipped?: boolean;
-  message?: string;
-}) {
-  if (mail.skipped) {
-    return "RESEND_API_KEY yok veya okunamadı.";
-  }
-
-  const raw = (mail.message || "").toLowerCase();
-  if (
-    raw.includes("only send testing emails to your own") ||
-    raw.includes("verify a domain") ||
-    raw.includes("testing emails") ||
-    raw.includes("403")
-  ) {
-    return "Resend test limiti: bu adrese mail gitmiyor. Aşağıdaki doğrulama linkini kullan.";
-  }
-
-  return mail.message
-    ? `Mail gitmedi: ${mail.message}`
-    : "Mail gönderilemedi. Aşağıdaki doğrulama linkini kullan.";
-}
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -64,49 +41,37 @@ export async function POST(request: Request) {
     const passwordHash = await hash(parsed.data.password, 10);
     const rank = rankFromPostCount(0);
 
+    // Resend domain yokken mail doğrulaması zorunlu değil; hesap hemen aktif.
     const user = await prisma.user.create({
       data: {
         name: parsed.data.name,
         email,
         passwordHash,
-        emailVerified: null,
+        emailVerified: new Date(),
         postCount: 0,
         rank,
       },
       select: { id: true, name: true, email: true, rank: true },
     });
 
-    const rawToken = await issueAuthToken(
-      user.id,
-      TOKEN_EMAIL_VERIFY,
-      1000 * 60 * 60 * 24,
-    );
-    const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
-    const mail = await sendVerificationEmail(email, verifyUrl);
-
-    if (!mail.ok) {
-      console.warn("[register] mail failed, returning verifyUrl", mail);
-      return NextResponse.json(
-        {
-          user,
-          needsVerification: true,
-          mailSent: false,
-          verifyUrl,
-          error: mailFailMessage(mail),
-          message: "Hesap oluştu. Mail gelmediyse doğrulama linkine tıkla.",
-        },
-        { status: 201 },
+    // İleride domain bağlanınca mail çalışsın diye arka planda dene (başarısız olsa sorun değil).
+    try {
+      const rawToken = await issueAuthToken(
+        user.id,
+        TOKEN_EMAIL_VERIFY,
+        1000 * 60 * 60 * 24,
       );
+      const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
+      await sendVerificationEmail(email, verifyUrl);
+    } catch (error) {
+      console.warn("[register] optional mail skipped:", error);
     }
 
     return NextResponse.json(
       {
         user,
-        needsVerification: true,
-        mailSent: true,
-        verifyUrl,
-        message:
-          "Kayıt tamam. Maildeki linki aç; gelmezse aşağıdaki doğrulama linkini kullan.",
+        needsVerification: false,
+        message: "Kayıt tamam. Giriş yapabilirsin.",
       },
       { status: 201 },
     );

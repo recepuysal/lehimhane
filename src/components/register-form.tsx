@@ -1,19 +1,18 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export function RegisterForm() {
+  const router = useRouter();
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [verifyUrl, setVerifyUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setSuccess("");
-    setVerifyUrl("");
     setLoading(true);
 
     const form = new FormData(event.currentTarget);
@@ -30,36 +29,28 @@ export function RegisterForm() {
     });
 
     const data = await response.json();
-    setLoading(false);
 
-    if (!response.ok && response.status !== 201) {
+    if (!response.ok) {
+      setLoading(false);
       setError(data.error ?? "Kayıt başarısız");
       return;
     }
 
-    if (data.verifyUrl) {
-      setVerifyUrl(data.verifyUrl);
-    }
+    const result = await signIn("credentials", {
+      email: payload.email,
+      password: payload.password,
+      redirect: false,
+    });
 
-    if (data.mailSent === false) {
-      setError(data.error ?? "Mail gönderilemedi");
-      setSuccess(
-        data.message ??
-          "Hesap oluştu. Aşağıdaki doğrulama linkine tıklaman yeterli.",
-      );
+    setLoading(false);
+
+    if (result?.error) {
+      setError("Kayıt oldu. Şimdi giriş sayfasından girebilirsin.");
       return;
     }
 
-    if (data.needsVerification) {
-      setSuccess(
-        data.message ??
-          "Kayıt tamam. E-postandaki veya aşağıdaki doğrulama linkini aç.",
-      );
-      event.currentTarget.reset();
-      return;
-    }
-
-    setSuccess("Kayıt tamam. Giriş yapabilirsin.");
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -83,15 +74,6 @@ export function RegisterForm() {
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
-      {success ? <p className="form-success">{success}</p> : null}
-      {verifyUrl ? (
-        <p className="form-success">
-          Doğrulama linki:{" "}
-          <a href={verifyUrl} style={{ wordBreak: "break-all" }}>
-            {verifyUrl}
-          </a>
-        </p>
-      ) : null}
       <button className="btn btn-primary btn-block" type="submit" disabled={loading}>
         {loading ? "Kaydediliyor..." : "Kayıt ol"}
       </button>

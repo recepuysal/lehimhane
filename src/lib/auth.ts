@@ -35,9 +35,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const isLocalDemo = user.email.endsWith("@lehimhane.local");
-        if (!user.emailVerified && !isLocalDemo) {
-          throw new Error("EMAIL_NOT_VERIFIED");
+        // Eski kayıtlarda emailVerified boş kalmış olabilir; şifre doğruysa hesabı aç.
+        if (!user.emailVerified) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerified: new Date() },
+          });
         }
 
         return {

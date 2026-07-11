@@ -28,11 +28,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "INVALID" }, { status: 401 });
     }
 
-    const isLocalDemo = user.email.endsWith("@lehimhane.local");
-    if (!user.emailVerified && !isLocalDemo) {
-      return NextResponse.json({ error: "EMAIL_NOT_VERIFIED" }, { status: 403 });
-    }
-
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "INVALID" }, { status: 500 });
