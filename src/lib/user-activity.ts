@@ -21,3 +21,24 @@ export async function bumpUserActivity(userId: string) {
     select: { id: true, postCount: true, rank: true },
   });
 }
+
+/** Yanıt/konu silinince mesaj sayısını düşürür ve rütbeyi günceller. */
+export async function dropUserActivity(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { postCount: true },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  const postCount = Math.max(0, user.postCount - 1);
+  const rank = rankFromPostCount(postCount);
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { postCount, rank },
+    select: { id: true, postCount: true, rank: true },
+  });
+}

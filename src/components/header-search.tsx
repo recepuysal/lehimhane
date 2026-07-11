@@ -29,7 +29,7 @@ export function HeaderSearch() {
         placeholder="Konu ara..."
         autoComplete="off"
       />
-      <button type="submit" className="btn btn-ghost header-search-submit">
+      <button type="submit" className="header-search-submit">
         Ara
       </button>
     </form>

@@ -20,6 +20,24 @@ export function canLockThread(params: {
   return canModerateThread(params);
 }
 
+export function canDeleteReply(params: {
+  role?: string | null;
+  userId?: string | null;
+  authorId: string;
+}) {
+  if (!params.userId) return false;
+  if (isModerator(params.role)) return true;
+  return params.userId === params.authorId;
+}
+
+export function canEditReply(params: {
+  userId?: string | null;
+  authorId: string;
+}) {
+  if (!params.userId) return false;
+  return params.userId === params.authorId;
+}
+
 export function canPinThread(role?: string | null) {
   return isModerator(role);
 }

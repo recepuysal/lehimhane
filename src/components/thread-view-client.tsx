@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatDate } from "@/lib/format";
 import { countLikes } from "@/lib/votes";
-import { excerptText } from "@/lib/moderation";
+import { canDeleteReply, canEditReply, excerptText } from "@/lib/moderation";
 import { RankBadge } from "@/components/rank-badge";
 import { LikeButton } from "@/components/like-button";
 import { RichText } from "@/components/rich-text";
@@ -12,6 +12,8 @@ import { TagList } from "@/components/tag-list";
 import { AttachmentList } from "@/components/attachment-list";
 import { ReplyForm, type QuoteDraft } from "@/components/reply-form";
 import { ThreadModerationBar } from "@/components/thread-moderation-bar";
+import { ReplyActionsMenu } from "@/components/reply-actions-menu";
+import { ReplyEditForm } from "@/components/reply-edit-form";
 
 type Author = {
   id: string;
@@ -76,6 +78,7 @@ export function ThreadViewClient({
   isAuthenticated: boolean;
 }) {
   const [quote, setQuote] = useState<QuoteDraft | null>(null);
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
 
   const threadLikes = countLikes(thread.votes);
   const threadLiked =
@@ -173,19 +176,37 @@ export function ThreadViewClient({
                 reply.votes.some(
                   (vote) => vote.userId === userId && vote.value === 1,
                 );
+              const canEdit = canEditReply({
+                userId,
+                authorId: reply.author.id,
+              });
+              const canDelete = canDeleteReply({
+                role: userRole,
+                userId,
+                authorId: reply.author.id,
+              });
+              const isEditing = editingReplyId === reply.id;
 
               return (
                 <li key={reply.id} id={`reply-${reply.id}`} className="reply-item">
-                  <div className="item-meta item-meta-row">
-                    <Link
-                      href={`/profil/${reply.author.id}`}
-                      className="author-link"
-                    >
-                      {reply.author.name}
-                    </Link>
-                    <RankBadge rank={reply.author.rank} compact />
-                    <span>·</span>
-                    <span>{formatDate(reply.createdAt)}</span>
+                  <div className="reply-item-head">
+                    <div className="item-meta item-meta-row">
+                      <Link
+                        href={`/profil/${reply.author.id}`}
+                        className="author-link"
+                      >
+                        {reply.author.name}
+                      </Link>
+                      <RankBadge rank={reply.author.rank} compact />
+                      <span>·</span>
+                      <span>{formatDate(reply.createdAt)}</span>
+                    </div>
+                    <ReplyActionsMenu
+                      replyId={reply.id}
+                      canEdit={canEdit && !thread.locked}
+                      canDelete={canDelete}
+                      onEdit={() => setEditingReplyId(reply.id)}
+                    />
                   </div>
                   {reply.quoteOriginal ? (
                     <blockquote className="quote-block">
@@ -205,34 +226,44 @@ export function ThreadViewClient({
                       <p>{excerptText(reply.quoteReply.body)}</p>
                     </blockquote>
                   ) : null}
-                  <div className="reply-body">
-                    <RichText content={reply.body} />
-                  </div>
-                  <AttachmentList attachments={reply.attachments} />
-                  <div className="action-row">
-                    <LikeButton
-                      target="reply"
-                      targetId={reply.id}
-                      initialCount={replyLikes}
-                      initiallyLiked={replyLiked}
-                      isAuthenticated={isAuthenticated}
+                  {isEditing ? (
+                    <ReplyEditForm
+                      replyId={reply.id}
+                      initialBody={reply.body}
+                      onCancel={() => setEditingReplyId(null)}
                     />
-                    {canQuote ? (
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() =>
-                          setQuote({
-                            replyId: reply.id,
-                            authorName: reply.author.name,
-                            excerpt: excerptText(reply.body),
-                          })
-                        }
-                      >
-                        Alıntıla
-                      </button>
-                    ) : null}
-                  </div>
+                  ) : (
+                    <>
+                      <div className="reply-body">
+                        <RichText content={reply.body} />
+                      </div>
+                      <AttachmentList attachments={reply.attachments} />
+                      <div className="action-row">
+                        <LikeButton
+                          target="reply"
+                          targetId={reply.id}
+                          initialCount={replyLikes}
+                          initiallyLiked={replyLiked}
+                          isAuthenticated={isAuthenticated}
+                        />
+                        {canQuote ? (
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() =>
+                              setQuote({
+                                replyId: reply.id,
+                                authorName: reply.author.name,
+                                excerpt: excerptText(reply.body),
+                              })
+                            }
+                          >
+                            Alıntıla
+                          </button>
+                        ) : null}
+                      </div>
+                    </>
+                  )}
                 </li>
               );
             })

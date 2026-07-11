@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Source_Sans_3 } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { Header } from "@/components/header";
+import { APP_VERSION_LABEL } from "@/lib/version";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -32,7 +33,10 @@ export default function RootLayout({
           <Header />
           <main className="shell page flex-1">{children}</main>
           <footer className="shell site-footer">
-            Lehimhane — elektronikçiler ve hobiciler için forum.
+            <span>Lehimhane — elektronikçiler ve hobiciler için forum.</span>
+            <span className="site-version" title="Uygulama sürümü">
+              {APP_VERSION_LABEL}
+            </span>
           </footer>
         </AuthProvider>
       </body>

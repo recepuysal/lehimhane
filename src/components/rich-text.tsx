@@ -1,3 +1,5 @@
+"use client";
+
 import { createElement, Fragment, type ReactNode } from "react";
 
 function isValidHttpUrl(value: string) {
@@ -12,7 +14,7 @@ function isValidHttpUrl(value: string) {
 
 function renderInline(text: string): ReactNode[] {
   const pattern =
-    /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)|(https?:\/\/[^\s<]+))/g;
+    /(`[^`]+`|\*\*[^*]+?\*\*|__[^_]+?__|\*[^*\n]+?\*|_[^_\n]+?_|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)|(https?:\/\/[^\s<]+))/g;
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -28,9 +30,12 @@ function renderInline(text: string): ReactNode[] {
       nodes.push(
         createElement("code", { key: key++, className: "md-code" }, token.slice(1, -1)),
       );
-    } else if (token.startsWith("**")) {
+    } else if (token.startsWith("**") || token.startsWith("__")) {
       nodes.push(createElement("strong", { key: key++ }, token.slice(2, -2)));
-    } else if (token.startsWith("*")) {
+    } else if (
+      (token.startsWith("*") && token.endsWith("*")) ||
+      (token.startsWith("_") && token.endsWith("_"))
+    ) {
       nodes.push(createElement("em", { key: key++ }, token.slice(1, -1)));
     } else if (match[2] && match[3]) {
       if (isValidHttpUrl(match[3])) {
@@ -75,22 +80,36 @@ function renderInline(text: string): ReactNode[] {
     nodes.push(text.slice(lastIndex));
   }
 
-  return nodes;
+  return nodes.length > 0 ? nodes : [""];
 }
 
 export function RichText({ content }: { content: string }) {
-  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const normalized = content.replace(/\r\n/g, "\n").trimEnd();
+  if (!normalized.trim()) {
+    return createElement("div", { className: "rich-text muted" }, "İçerik yok");
+  }
+
+  const blocks = normalized.split(/\n{2,}/);
 
   return createElement(
     "div",
     { className: "rich-text" },
-    lines.map((line, index) =>
-      createElement(
-        Fragment,
-        { key: index },
-        ...renderInline(line),
-        index < lines.length - 1 ? createElement("br") : null,
-      ),
-    ),
+    blocks.map((block, blockIndex) => {
+      const lines = block.split("\n");
+      return createElement(
+        "p",
+        { key: blockIndex, className: "rich-text-p" },
+        lines.map((line, lineIndex) =>
+          createElement(
+            Fragment,
+            { key: lineIndex },
+            ...renderInline(line),
+            lineIndex < lines.length - 1
+              ? createElement("br", { key: `br-${lineIndex}` })
+              : null,
+          ),
+        ),
+      );
+    }),
   );
 }

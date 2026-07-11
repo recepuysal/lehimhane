@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { RichText } from "@/components/rich-text";
 
 const EMOJIS = [
   "😀", "😁", "😂", "😊", "😍", "🤔", "😎", "🙌",
@@ -40,6 +41,7 @@ export function ComposerEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState(defaultValue);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [mode, setMode] = useState<"write" | "preview">("write");
 
   function applyChange(next: string, cursorStart: number, cursorEnd = cursorStart) {
     const el = textareaRef.current;
@@ -54,6 +56,7 @@ export function ComposerEditor({
   function wrapSelection(before: string, after = before) {
     const el = textareaRef.current;
     if (!el) return;
+    setMode("write");
 
     const start = el.selectionStart;
     const end = el.selectionEnd;
@@ -73,6 +76,7 @@ export function ComposerEditor({
   function insertText(text: string) {
     const el = textareaRef.current;
     if (!el) return;
+    setMode("write");
 
     const start = el.selectionStart;
     const end = el.selectionEnd;
@@ -83,6 +87,7 @@ export function ComposerEditor({
   function insertLink() {
     const el = textareaRef.current;
     if (!el) return;
+    setMode("write");
 
     const start = el.selectionStart;
     const end = el.selectionEnd;
@@ -112,47 +117,77 @@ export function ComposerEditor({
   return (
     <div className="composer-editor">
       <div className="editor-label">{label}</div>
-      <div className="editor-toolbar" role="toolbar" aria-label="Yazı araçları">
-        <button type="button" className="editor-tool" onClick={() => wrapSelection("**")}>
-          Kalın
-        </button>
-        <button type="button" className="editor-tool" onClick={() => wrapSelection("*")}>
-          İtalik
-        </button>
-        <button type="button" className="editor-tool" onClick={() => wrapSelection("`")}>
-          Kod
-        </button>
-        <button type="button" className="editor-tool" onClick={insertLink}>
-          Link
+
+      <div className="editor-tabs" role="tablist" aria-label="Yazı / Önizleme">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "write"}
+          className={`editor-tab${mode === "write" ? " editor-tab-active" : ""}`}
+          onClick={() => setMode("write")}
+        >
+          Yaz
         </button>
         <button
           type="button"
-          className="editor-tool"
-          onClick={() => setShowEmoji((open) => !open)}
+          role="tab"
+          aria-selected={mode === "preview"}
+          className={`editor-tab${mode === "preview" ? " editor-tab-active" : ""}`}
+          onClick={() => {
+            setShowEmoji(false);
+            setMode("preview");
+          }}
         >
-          Emoji
+          Önizle
         </button>
       </div>
-      <p className="editor-hint">
-        İpucu: Önce yazıyı seç, sonra Kalın / İtalik / Kod / Link’e bas.
-      </p>
 
-      {showEmoji ? (
-        <div className="emoji-panel" role="listbox" aria-label="Emoji seç">
-          {EMOJIS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              className="emoji-btn"
-              onClick={() => {
-                insertText(emoji);
-                setShowEmoji(false);
-              }}
-            >
-              {emoji}
+      {mode === "write" ? (
+        <>
+          <div className="editor-toolbar" role="toolbar" aria-label="Yazı araçları">
+            <button type="button" className="editor-tool" onClick={() => wrapSelection("**")}>
+              Kalın
             </button>
-          ))}
-        </div>
+            <button type="button" className="editor-tool" onClick={() => wrapSelection("*")}>
+              İtalik
+            </button>
+            <button type="button" className="editor-tool" onClick={() => wrapSelection("`")}>
+              Kod
+            </button>
+            <button type="button" className="editor-tool" onClick={insertLink}>
+              Link
+            </button>
+            <button
+              type="button"
+              className="editor-tool"
+              onClick={() => setShowEmoji((open) => !open)}
+            >
+              Emoji
+            </button>
+          </div>
+          <p className="editor-hint">
+            Örnek: <code>**kalın**</code>, <code>*italik*</code>, <code>`kod`</code>,{" "}
+            <code>[yazı](https://...)</code> — sonra Önizle’ye bas.
+          </p>
+
+          {showEmoji ? (
+            <div className="emoji-panel" role="listbox" aria-label="Emoji seç">
+              {EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="emoji-btn"
+                  onClick={() => {
+                    insertText(emoji);
+                    setShowEmoji(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       <textarea
@@ -164,7 +199,24 @@ export function ComposerEditor({
         minLength={minLength}
         rows={rows}
         placeholder={placeholder}
+        className={mode === "preview" ? "editor-textarea-hidden" : undefined}
+        tabIndex={mode === "preview" ? -1 : undefined}
+        aria-hidden={mode === "preview"}
       />
+
+      {mode === "preview" ? (
+        <div className="editor-preview-pane" role="tabpanel" aria-label="Önizleme">
+          {value.trim() ? (
+            <div className="editor-preview-body reply-body">
+              <RichText content={value} />
+            </div>
+          ) : (
+            <p className="editor-preview-empty muted">
+              Önizlenecek bir şey yok. Yaz sekmesine dönüp bir şeyler yaz.
+            </p>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

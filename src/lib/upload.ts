@@ -143,3 +143,17 @@ export function collectFormFiles(formData: FormData, field = "files") {
     .getAll(field)
     .filter((entry): entry is File => entry instanceof File && entry.size > 0);
 }
+
+export async function deleteAttachmentFiles(urls: string[]) {
+  const { unlink } = await import("fs/promises");
+  for (const url of urls) {
+    if (!url.startsWith("/uploads/attachments/")) continue;
+    const relative = url.replace(/^\//, "");
+    const fullPath = path.join(process.cwd(), "public", relative);
+    try {
+      await unlink(fullPath);
+    } catch {
+      // dosya yoksa sessiz geç
+    }
+  }
+}
