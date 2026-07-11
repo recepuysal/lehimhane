@@ -34,7 +34,18 @@ export async function sendMail(options: {
 
   if (result.error) {
     console.error("[mail] Resend error:", result.error);
-    return { ok: false as const, skipped: false as const, error: result.error };
+    const message =
+      typeof result.error === "object" &&
+      result.error &&
+      "message" in result.error
+        ? String((result.error as { message?: string }).message)
+        : "Mail gönderilemedi";
+    return {
+      ok: false as const,
+      skipped: false as const,
+      error: result.error,
+      message,
+    };
   }
 
   return { ok: true as const, id: result.data?.id };

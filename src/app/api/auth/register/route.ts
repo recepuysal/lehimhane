@@ -16,6 +16,28 @@ const registerSchema = z.object({
   password: z.string().min(6, "Şifre en az 6 karakter olmalı").max(100),
 });
 
+function mailFailMessage(mail: {
+  skipped?: boolean;
+  message?: string;
+}) {
+  if (mail.skipped) {
+    return "Sunucuda RESEND_API_KEY tanımlı değil. Railway Variables'a ekle.";
+  }
+
+  const raw = (mail.message || "").toLowerCase();
+  if (
+    raw.includes("only send testing emails to your own") ||
+    raw.includes("verify a domain") ||
+    raw.includes("testing emails")
+  ) {
+    return "Resend ücretsiz test modunda: mail yalnızca Resend hesabındaki e-postaya gider. Kayıt için o adresi kullan veya spam klasörüne bak.";
+  }
+
+  return mail.message
+    ? `Hesap oluştu ama mail gitmedi: ${mail.message}`
+    : "Hesap oluştu ama doğrulama maili gönderilemedi.";
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -61,12 +83,14 @@ export async function POST(request: Request) {
     const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
     const mail = await sendVerificationEmail(email, verifyUrl);
 
-    if (!mail.ok && !("skipped" in mail && mail.skipped)) {
+    if (!mail.ok) {
+      console.warn("[register] verify url (mail failed):", verifyUrl);
       return NextResponse.json(
         {
-          error:
-            "Hesap oluşturuldu ama doğrulama maili gönderilemedi. Daha sonra tekrar dene.",
+          user,
           needsVerification: true,
+          mailSent: false,
+          error: mailFailMessage(mail),
         },
         { status: 201 },
       );
@@ -76,8 +100,9 @@ export async function POST(request: Request) {
       {
         user,
         needsVerification: true,
+        mailSent: true,
         message:
-          "Kayıt tamam. Giriş yapmak için e-postandaki doğrulama bağlantısını aç.",
+          "Kayıt tamam. Giriş için e-postadaki doğrulama bağlantısını aç (spam klasörüne de bak).",
       },
       { status: 201 },
     );

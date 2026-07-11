@@ -35,6 +35,16 @@ export function RegisterForm() {
       return;
     }
 
+    if (data.mailSent === false || data.error) {
+      setError(data.error ?? "Mail gönderilemedi");
+      if (data.needsVerification) {
+        setSuccess(
+          "Hesap oluştu. Girişte «Doğrulama mailini tekrar gönder» ile dene; Resend hesabındaki e-postayı kullan.",
+        );
+      }
+      return;
+    }
+
     if (data.needsVerification) {
       setSuccess(
         data.message ??
