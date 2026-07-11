@@ -1,0 +1,56 @@
+import { NextResponse } from "next/server";
+import { hash } from "bcryptjs";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { rankFromPostCount } from "@/lib/ranks";
+
+const registerSchema = z.object({
+  name: z.string().trim().min(2, "İsim en az 2 karakter olmalı").max(50),
+  email: z.string().trim().email("Geçerli bir e-posta girin"),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalı").max(100),
+});
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const parsed = registerSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Geçersiz veri" },
+        { status: 400 },
+      );
+    }
+
+    const email = parsed.data.email.toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email } });
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "Bu e-posta zaten kayıtlı" },
+        { status: 409 },
+      );
+    }
+
+    const passwordHash = await hash(parsed.data.password, 10);
+    const rank = rankFromPostCount(0);
+
+    const user = await prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email,
+        passwordHash,
+        postCount: 0,
+        rank,
+      },
+      select: { id: true, name: true, email: true, rank: true },
+    });
+
+    return NextResponse.json({ user }, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: "Kayıt sırasında bir hata oluştu" },
+      { status: 500 },
+    );
+  }
+}

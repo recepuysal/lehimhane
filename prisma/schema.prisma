@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  postCount     Int            @default(0)
+  rank          String         @default("Acemi Pin")
+  role          String         @default("USER")
+  bio           String         @default("")
+  location      String         @default("")
+  website       String         @default("")
+  avatarUrl     String?
+  bannerUrl     String?
+  createdAt     DateTime       @default(now())
+  threads       Thread[]
+  replies       Reply[]
+  notifications Notification[] @relation("NotificationRecipient")
+  actors        Notification[] @relation("NotificationActor")
+  threadVotes   ThreadVote[]
+  replyVotes    ReplyVote[]
+  projectVotes  ProjectVote[]
+  projectComments ProjectComment[]
+  projects      Project[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  createdAt   DateTime @default(now())
+  threads     Thread[]
+}
+
+model Thread {
+  id            String         @id @default(cuid())
+  title         String
+  body          String
+  pinned        Boolean        @default(false)
+  locked        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  authorId      String
+  categoryId    String
+  author        User           @relation(fields: [authorId], references: [id])
+  category      Category       @relation(fields: [categoryId], references: [id])
+  replies       Reply[]
+  notifications Notification[]
+  votes         ThreadVote[]
+  tags          ThreadTag[]
+  attachments   Attachment[]
+}
+
+model Reply {
+  id           String       @id @default(cuid())
+  body         String
+  createdAt    DateTime     @default(now())
+  authorId     String
+  threadId     String
+  quoteReplyId String?
+  quoteOriginal Boolean     @default(false)
+  author       User         @relation(fields: [authorId], references: [id])
+  thread       Thread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  quoteReply   Reply?       @relation("ReplyQuotes", fields: [quoteReplyId], references: [id], onDelete: SetNull)
+  quotedBy     Reply[]      @relation("ReplyQuotes")
+  votes        ReplyVote[]
+  attachments  Attachment[]
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  fileName  String
+  url       String
+  mimeType  String
+  size      Int
+  kind      String
+  createdAt DateTime @default(now())
+  threadId  String?
+  replyId   String?
+  thread    Thread?  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  reply     Reply?   @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([replyId])
+}
+
+model Tag {
+  id      String      @id @default(cuid())
+  name    String
+  slug    String      @unique
+  threads ThreadTag[]
+}
+
+model ThreadTag {
+  threadId String
+  tagId    String
+  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, tagId])
+}
+
+model ThreadVote {
+  id        String   @id @default(cuid())
+  value     Int
+  createdAt DateTime @default(now())
+  userId    String
+  threadId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, threadId])
+  @@index([threadId])
+}
+
+model ReplyVote {
+  id        String   @id @default(cuid())
+  value     Int
+  createdAt DateTime @default(now())
+  userId    String
+  replyId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply     Reply    @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, replyId])
+  @@index([replyId])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  type        String
+  message     String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  userId      String
+  actorId     String?
+  threadId    String?
+  projectId   String?
+  user        User     @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor       User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  thread      Thread?  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+}
+
+model Project {
+  id          String           @id @default(cuid())
+  title       String
+  summary     String
+  body        String           @default("")
+  platform    String
+  status      String           @default("devam")
+  coverUrl    String?
+  viewCount   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  authorId    String
+  author      User             @relation(fields: [authorId], references: [id])
+  images      ProjectImage[]
+  steps       ProjectStep[]
+  supplies    ProjectSupply[]
+  votes       ProjectVote[]
+  comments    ProjectComment[]
+  notifications Notification[]
+
+  @@index([createdAt])
+  @@index([platform])
+}
+
+model ProjectVote {
+  id        String   @id @default(cuid())
+  value     Int
+  createdAt DateTime @default(now())
+  userId    String
+  projectId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+}
+
+model ProjectComment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+  authorId  String
+  projectId String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+}
+
+model ProjectImage {
+  id        String   @id @default(cuid())
+  url       String
+  fileName  String
+  createdAt DateTime @default(now())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ProjectStep {
+  id        String   @id @default(cuid())
+  order     Int
+  title     String
+  body      String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, order])
+}
+
+model ProjectSupply {
+  id        String  @id @default(cuid())
+  order     Int
+  name      String
+  quantity  String  @default("")
+  note      String  @default("")
+  link      String  @default("")
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, order])
+}
