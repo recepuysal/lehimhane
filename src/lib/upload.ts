@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomBytes } from "crypto";
+import { getUploadRoot } from "@/lib/paths";
 
 const IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -45,6 +46,10 @@ function safeFileName(name: string) {
   return name.replace(/[^\w.\- ()\[\]]+/g, "_").slice(0, 80) || "dosya";
 }
 
+function uploadDir(...parts: string[]) {
+  return path.join(getUploadRoot(), ...parts);
+}
+
 export async function saveUploadedImage(
   file: File,
   kind: "avatar" | "banner",
@@ -66,7 +71,7 @@ export async function saveUploadedImage(
           ? "webp"
           : "gif";
 
-  const dir = path.join(process.cwd(), "public", "uploads", kind);
+  const dir = uploadDir(kind);
   await mkdir(dir, { recursive: true });
 
   const filename = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
@@ -79,7 +84,9 @@ export async function saveUploadedImage(
 export async function saveAttachment(file: File): Promise<SavedAttachment> {
   const kind = resolveKind(file);
   if (!kind) {
-    throw new Error("Sadece resim (JPG/PNG/WEBP/GIF) veya metin (TXT/MD/CSV) ekleyebilirsiniz");
+    throw new Error(
+      "Sadece resim (JPG/PNG/WEBP/GIF) veya metin (TXT/MD/CSV) ekleyebilirsiniz",
+    );
   }
 
   if (file.size > MAX_BYTES) {
@@ -89,7 +96,7 @@ export async function saveAttachment(file: File): Promise<SavedAttachment> {
   const original = safeFileName(file.name);
   const ext = extensionOf(original) || (kind === "image" ? ".jpg" : ".txt");
   const stored = `${Date.now()}-${randomBytes(6).toString("hex")}${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "attachments");
+  const dir = uploadDir("attachments");
   await mkdir(dir, { recursive: true });
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -115,9 +122,12 @@ export async function saveProjectImage(file: File) {
   const original = safeFileName(file.name);
   const ext = extensionOf(original) || ".jpg";
   const stored = `${Date.now()}-${randomBytes(6).toString("hex")}${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "projects");
+  const dir = uploadDir("projects");
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, stored), Buffer.from(await file.arrayBuffer()));
+  await writeFile(
+    path.join(dir, stored),
+    Buffer.from(await file.arrayBuffer()),
+  );
 
   return {
     fileName: original,
@@ -148,8 +158,8 @@ export async function deleteAttachmentFiles(urls: string[]) {
   const { unlink } = await import("fs/promises");
   for (const url of urls) {
     if (!url.startsWith("/uploads/attachments/")) continue;
-    const relative = url.replace(/^\//, "");
-    const fullPath = path.join(process.cwd(), "public", relative);
+    const name = path.basename(url);
+    const fullPath = uploadDir("attachments", name);
     try {
       await unlink(fullPath);
     } catch {

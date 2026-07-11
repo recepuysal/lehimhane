@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/format";
 import { RankBadge } from "@/components/rank-badge";
+import { categoryDemoImage } from "@/lib/demo-images";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,13 @@ export default async function HomePage() {
           {categories.map((category) => (
             <li key={category.id}>
               <Link href={`/kategori/${category.slug}`} className="category-item">
+                <div
+                  className="category-thumb"
+                  style={{
+                    backgroundImage: `url(${categoryDemoImage(category.slug)})`,
+                  }}
+                  aria-hidden
+                />
                 <div>
                   <div className="item-title">{category.name}</div>
                   <div className="item-meta">{category.description}</div>
@@ -80,14 +88,23 @@ export default async function HomePage() {
           ) : (
             recentProjects.map((project) => (
               <li key={project.id}>
-                <Link href={`/projeler/${project.id}`} className="thread-item">
-                  <div className="item-title">{project.title}</div>
-                  <div className="item-meta item-meta-row">
-                    <span>{project.platform}</span>
-                    <span>·</span>
-                    <span>{project.author.name}</span>
-                    <span>·</span>
-                    <span>{project.summary}</span>
+                <Link href={`/projeler/${project.id}`} className="thread-item project-home-item">
+                  {project.coverUrl ? (
+                    <div
+                      className="category-thumb"
+                      style={{ backgroundImage: `url(${project.coverUrl})` }}
+                      aria-hidden
+                    />
+                  ) : null}
+                  <div>
+                    <div className="item-title">{project.title}</div>
+                    <div className="item-meta item-meta-row">
+                      <span>{project.platform}</span>
+                      <span>·</span>
+                      <span>{project.author.name}</span>
+                      <span>·</span>
+                      <span>{project.summary}</span>
+                    </div>
                   </div>
                 </Link>
               </li>

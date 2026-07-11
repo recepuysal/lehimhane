@@ -90,6 +90,8 @@ async function main() {
 
   const arduino = categories.find((c) => c.slug === "arduino")!;
   const genel = categories.find((c) => c.slug === "genel")!;
+  const stm32 = categories.find((c) => c.slug === "stm32-arm")!;
+  const pi = categories.find((c) => c.slug === "raspberry-pi")!;
 
   const welcome = await prisma.thread.create({
     data: {
@@ -117,6 +119,93 @@ async function main() {
       categoryId: arduino.id,
     },
   });
+
+  await prisma.thread.create({
+    data: {
+      title: "STM32F4 Discovery ile ilk HAL projesi",
+      body: "Discovery kartında LED + buton interrupt örneği. CubeMX ayarlarını paylaşalım.",
+      authorId: demoUser.id,
+      categoryId: stm32.id,
+    },
+  });
+
+  await prisma.thread.create({
+    data: {
+      title: "Pi 4 kamera modülü odak sorunu",
+      body: "Raspberry Pi Camera Module v2 ile fotoğraflar soft çıkıyor. libcamera ayar önerisi?",
+      authorId: demoUser.id,
+      categoryId: pi.id,
+    },
+  });
+
+  const demoProjects = [
+    {
+      title: "Arduino ile LED nefes efekti",
+      summary:
+        "PWM ile yumuşak LED fade. Breadboard üzerinde 5 dakikada kurabileceğin giriş projesi.",
+      body: "Arduino Uno ile PWM LED nefes efekti.\n\n**Gerekenler:** Uno, LED, 220Ω.",
+      platform: "Arduino",
+      status: "bitti",
+      coverUrl: "/demo/arduino.jpg",
+      stepTitle: "Bağlantı ve kod",
+      stepBody: "LED D9'a, PWM ile 0–255 salınım.",
+    },
+    {
+      title: "STM32 Blue Pill blink & debug",
+      summary: "CubeMX + HAL ile PC13 blink. ST-Link ve ilk debug.",
+      body: "STM32F103 Blue Pill ilk blink.",
+      platform: "STM32",
+      status: "devam",
+      coverUrl: "/demo/stm32.jpg",
+      stepTitle: "CubeMX ayarı",
+      stepBody: "PC13 output, HAL_GPIO_TogglePin + delay.",
+    },
+    {
+      title: "Raspberry Pi GPIO ile röle kontrol",
+      summary: "Python ile GPIO röle sürme ve güvenlik notları.",
+      body: "Pi 4 röle kontrolü. Optocoupler izolasyonuna dikkat.",
+      platform: "Raspberry Pi",
+      status: "fikir",
+      coverUrl: "/demo/raspberry-pi.jpg",
+      stepTitle: "Python ile pin aç/kapa",
+      stepBody: "gpiozero ile OUT pin; aktif-low invert.",
+    },
+  ];
+
+  for (const project of demoProjects) {
+    await prisma.project.create({
+      data: {
+        title: project.title,
+        summary: project.summary,
+        body: project.body,
+        platform: project.platform,
+        status: project.status,
+        coverUrl: project.coverUrl,
+        authorId: demoUser.id,
+        steps: {
+          create: [
+            {
+              order: 1,
+              title: project.stepTitle,
+              body: project.stepBody,
+              imageUrl: project.coverUrl,
+            },
+          ],
+        },
+        supplies: {
+          create: [
+            {
+              order: 1,
+              name: project.platform,
+              quantity: "1",
+              note: "Demo",
+              link: "",
+            },
+          ],
+        },
+      },
+    });
+  }
 }
 
 main()

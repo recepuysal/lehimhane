@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/format";
 import { RankBadge } from "@/components/rank-badge";
+import { categoryDemoImage } from "@/lib/demo-images";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,8 @@ export default async function CategoryPage({ params }: Props) {
     notFound();
   }
 
+  const cover = categoryDemoImage(category.slug);
+
   return (
     <div className="stack">
       <div className="breadcrumb">
@@ -38,7 +41,10 @@ export default async function CategoryPage({ params }: Props) {
         <span>{category.name}</span>
       </div>
 
-      <section className="hero">
+      <section
+        className="category-hero"
+        style={{ backgroundImage: `url(${cover})` }}
+      >
         <h1>{category.name}</h1>
         <p>{category.description}</p>
       </section>

@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "Lehimhane — Elektronik Forum",
   description:
     "Arduino, Raspberry Pi, STM32 ve hobi elektronik topluluğu. Konu aç, paylaş, rütbe kazan.",
+  icons: {
+    icon: [{ url: "/brand/lehimhane-logo.png", type: "image/png" }],
+    apple: [{ url: "/brand/lehimhane-logo.png" }],
+  },
 };
 
 export default function RootLayout({
@@ -33,7 +37,17 @@ export default function RootLayout({
           <Header />
           <main className="shell page flex-1">{children}</main>
           <footer className="shell site-footer">
-            <span>Lehimhane — elektronikçiler ve hobiciler için forum.</span>
+            <span className="site-footer-brand">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/lehimhane-logo.png"
+                alt=""
+                className="footer-logo"
+                width={28}
+                height={28}
+              />
+              Lehimhane — elektronikçiler ve hobiciler için forum.
+            </span>
             <span className="site-version" title="Uygulama sürümü">
               {APP_VERSION_LABEL}
             </span>

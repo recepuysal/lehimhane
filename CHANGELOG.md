@@ -2,6 +2,13 @@
 
 Lehimhane sürüm notları. SemVer kullanıyoruz: `MAJOR.MINOR.PATCH`.
 
+## [0.3.0] — 2026-07-11
+
+### Eklenen
+- Railway deploy hazırlığı (`railway.toml`, `start:railway`)
+- Kalıcı upload/DB yolu (`/data`) desteği
+- Logo, hamburger menü, kategori demo görselleri
+
 ## [0.2.0] — 2026-07-11
 
 ### Eklenen
