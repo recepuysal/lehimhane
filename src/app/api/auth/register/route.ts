@@ -21,21 +21,22 @@ function mailFailMessage(mail: {
   message?: string;
 }) {
   if (mail.skipped) {
-    return "Sunucuda RESEND_API_KEY tanımlı değil. Railway Variables'a ekle.";
+    return "RESEND_API_KEY yok veya okunamadı.";
   }
 
   const raw = (mail.message || "").toLowerCase();
   if (
     raw.includes("only send testing emails to your own") ||
     raw.includes("verify a domain") ||
-    raw.includes("testing emails")
+    raw.includes("testing emails") ||
+    raw.includes("403")
   ) {
-    return "Resend ücretsiz test modunda: mail yalnızca Resend hesabındaki e-postaya gider. Kayıt için o adresi kullan veya spam klasörüne bak.";
+    return "Resend test limiti: bu adrese mail gitmiyor. Aşağıdaki doğrulama linkini kullan.";
   }
 
   return mail.message
-    ? `Hesap oluştu ama mail gitmedi: ${mail.message}`
-    : "Hesap oluştu ama doğrulama maili gönderilemedi.";
+    ? `Mail gitmedi: ${mail.message}`
+    : "Mail gönderilemedi. Aşağıdaki doğrulama linkini kullan.";
 }
 
 export async function POST(request: Request) {
@@ -84,13 +85,15 @@ export async function POST(request: Request) {
     const mail = await sendVerificationEmail(email, verifyUrl);
 
     if (!mail.ok) {
-      console.warn("[register] verify url (mail failed):", verifyUrl);
+      console.warn("[register] mail failed, returning verifyUrl", mail);
       return NextResponse.json(
         {
           user,
           needsVerification: true,
           mailSent: false,
+          verifyUrl,
           error: mailFailMessage(mail),
+          message: "Hesap oluştu. Mail gelmediyse doğrulama linkine tıkla.",
         },
         { status: 201 },
       );
@@ -101,8 +104,9 @@ export async function POST(request: Request) {
         user,
         needsVerification: true,
         mailSent: true,
+        verifyUrl,
         message:
-          "Kayıt tamam. Giriş için e-postadaki doğrulama bağlantısını aç (spam klasörüne de bak).",
+          "Kayıt tamam. Maildeki linki aç; gelmezse aşağıdaki doğrulama linkini kullan.",
       },
       { status: 201 },
     );

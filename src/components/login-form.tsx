@@ -9,13 +9,17 @@ export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [verifyUrl, setVerifyUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailForResend, setEmailForResend] = useState("");
+  const [unverified, setUnverified] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setInfo("");
+    setVerifyUrl("");
+    setUnverified(false);
     setLoading(true);
 
     const form = new FormData(event.currentTarget);
@@ -33,6 +37,7 @@ export function LoginForm() {
     if (!preflight.ok) {
       setLoading(false);
       if (pre.error === "EMAIL_NOT_VERIFIED") {
+        setUnverified(true);
         setError("E-posta henüz doğrulanmamış.");
         return;
       }
@@ -63,6 +68,7 @@ export function LoginForm() {
       return;
     }
     setInfo("");
+    setVerifyUrl("");
     const response = await fetch("/api/auth/resend-verification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -73,7 +79,8 @@ export function LoginForm() {
       setError(data.error ?? "Mail gönderilemedi");
       return;
     }
-    setInfo(data.message ?? "Doğrulama maili gönderildi.");
+    setInfo(data.message ?? "Doğrulama hazır.");
+    if (data.verifyUrl) setVerifyUrl(data.verifyUrl);
   }
 
   return (
@@ -99,16 +106,24 @@ export function LoginForm() {
       </label>
       {error ? <p className="form-error">{error}</p> : null}
       {info ? <p className="form-success">{info}</p> : null}
+      {verifyUrl ? (
+        <p className="form-success">
+          Doğrulama linki:{" "}
+          <a href={verifyUrl} style={{ wordBreak: "break-all" }}>
+            Buraya tıkla
+          </a>
+        </p>
+      ) : null}
       <button className="btn btn-primary btn-block" type="submit" disabled={loading}>
         {loading ? "Giriş yapılıyor..." : "Giriş yap"}
       </button>
-      {error.includes("doğrulanmamış") ? (
+      {unverified ? (
         <button
           className="btn btn-ghost btn-block"
           type="button"
           onClick={resendVerification}
         >
-          Doğrulama mailini tekrar gönder
+          Doğrulama linki al
         </button>
       ) : null}
       <p className="form-meta">

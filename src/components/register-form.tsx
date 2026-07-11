@@ -6,12 +6,14 @@ import Link from "next/link";
 export function RegisterForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [verifyUrl, setVerifyUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setSuccess("");
+    setVerifyUrl("");
     setLoading(true);
 
     const form = new FormData(event.currentTarget);
@@ -35,20 +37,23 @@ export function RegisterForm() {
       return;
     }
 
-    if (data.mailSent === false || data.error) {
+    if (data.verifyUrl) {
+      setVerifyUrl(data.verifyUrl);
+    }
+
+    if (data.mailSent === false) {
       setError(data.error ?? "Mail gönderilemedi");
-      if (data.needsVerification) {
-        setSuccess(
-          "Hesap oluştu. Girişte «Doğrulama mailini tekrar gönder» ile dene; Resend hesabındaki e-postayı kullan.",
-        );
-      }
+      setSuccess(
+        data.message ??
+          "Hesap oluştu. Aşağıdaki doğrulama linkine tıklaman yeterli.",
+      );
       return;
     }
 
     if (data.needsVerification) {
       setSuccess(
         data.message ??
-          "Kayıt tamam. E-postandaki doğrulama bağlantısını aç, sonra giriş yap.",
+          "Kayıt tamam. E-postandaki veya aşağıdaki doğrulama linkini aç.",
       );
       event.currentTarget.reset();
       return;
@@ -79,6 +84,14 @@ export function RegisterForm() {
       </label>
       {error ? <p className="form-error">{error}</p> : null}
       {success ? <p className="form-success">{success}</p> : null}
+      {verifyUrl ? (
+        <p className="form-success">
+          Doğrulama linki:{" "}
+          <a href={verifyUrl} style={{ wordBreak: "break-all" }}>
+            {verifyUrl}
+          </a>
+        </p>
+      ) : null}
       <button className="btn btn-primary btn-block" type="submit" disabled={loading}>
         {loading ? "Kaydediliyor..." : "Kayıt ol"}
       </button>
