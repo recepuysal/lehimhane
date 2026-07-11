@@ -1,18 +1,17 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export function RegisterForm() {
-  const router = useRouter();
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     const form = new FormData(event.currentTarget);
@@ -29,28 +28,23 @@ export function RegisterForm() {
     });
 
     const data = await response.json();
+    setLoading(false);
 
-    if (!response.ok) {
-      setLoading(false);
+    if (!response.ok && response.status !== 201) {
       setError(data.error ?? "Kayıt başarısız");
       return;
     }
 
-    const result = await signIn("credentials", {
-      email: payload.email,
-      password: payload.password,
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (result?.error) {
-      setError("Kayıt oldu, ancak giriş yapılamadı. Lütfen giriş sayfasını deneyin.");
+    if (data.needsVerification) {
+      setSuccess(
+        data.message ??
+          "Kayıt tamam. E-postandaki doğrulama bağlantısını aç, sonra giriş yap.",
+      );
+      event.currentTarget.reset();
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    setSuccess("Kayıt tamam. Giriş yapabilirsin.");
   }
 
   return (
@@ -74,6 +68,7 @@ export function RegisterForm() {
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
+      {success ? <p className="form-success">{success}</p> : null}
       <button className="btn btn-primary btn-block" type="submit" disabled={loading}>
         {loading ? "Kaydediliyor..." : "Kayıt ol"}
       </button>

@@ -26,13 +26,18 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email.toLowerCase().trim() },
         });
 
-        if (!user) {
+        if (!user?.passwordHash) {
           return null;
         }
 
         const valid = await compare(credentials.password, user.passwordHash);
         if (!valid) {
           return null;
+        }
+
+        const isLocalDemo = user.email.endsWith("@lehimhane.local");
+        if (!user.emailVerified && !isLocalDemo) {
+          throw new Error("EMAIL_NOT_VERIFIED");
         }
 
         return {

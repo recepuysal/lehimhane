@@ -11,7 +11,8 @@ model User {
   id            String         @id @default(cuid())
   name          String
   email         String         @unique
-  passwordHash  String
+  passwordHash  String?
+  emailVerified DateTime?
   postCount     Int            @default(0)
   rank          String         @default("Acemi Pin")
   role          String         @default("USER")
@@ -30,6 +31,19 @@ model User {
   projectVotes  ProjectVote[]
   projectComments ProjectComment[]
   projects      Project[]
+  authTokens    AuthToken[]
+}
+
+model AuthToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
 }
 
 model Category {

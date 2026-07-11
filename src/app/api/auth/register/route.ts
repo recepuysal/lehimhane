@@ -3,6 +3,12 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rankFromPostCount } from "@/lib/ranks";
+import {
+  TOKEN_EMAIL_VERIFY,
+  appBaseUrl,
+  issueAuthToken,
+} from "@/lib/auth-tokens";
+import { sendVerificationEmail } from "@/lib/mail";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "İsim en az 2 karakter olmalı").max(50),
@@ -40,13 +46,41 @@ export async function POST(request: Request) {
         name: parsed.data.name,
         email,
         passwordHash,
+        emailVerified: null,
         postCount: 0,
         rank,
       },
       select: { id: true, name: true, email: true, rank: true },
     });
 
-    return NextResponse.json({ user }, { status: 201 });
+    const rawToken = await issueAuthToken(
+      user.id,
+      TOKEN_EMAIL_VERIFY,
+      1000 * 60 * 60 * 24,
+    );
+    const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
+    const mail = await sendVerificationEmail(email, verifyUrl);
+
+    if (!mail.ok && !("skipped" in mail && mail.skipped)) {
+      return NextResponse.json(
+        {
+          error:
+            "Hesap oluşturuldu ama doğrulama maili gönderilemedi. Daha sonra tekrar dene.",
+          needsVerification: true,
+        },
+        { status: 201 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        user,
+        needsVerification: true,
+        message:
+          "Kayıt tamam. Giriş yapmak için e-postandaki doğrulama bağlantısını aç.",
+      },
+      { status: 201 },
+    );
   } catch {
     return NextResponse.json(
       { error: "Kayıt sırasında bir hata oluştu" },

@@ -5,18 +5,21 @@ import { rankFromPostCount } from "../src/lib/ranks";
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.authToken.deleteMany();
   await prisma.reply.deleteMany();
   await prisma.thread.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
 
   const passwordHash = await hash("demo1234", 10);
+  const verifiedAt = new Date();
 
   const demoUser = await prisma.user.create({
     data: {
       name: "Demo Maker",
       email: "demo@lehimhane.local",
       passwordHash,
+      emailVerified: verifiedAt,
       postCount: 12,
       rank: rankFromPostCount(12),
       role: "MOD",
@@ -28,6 +31,7 @@ async function main() {
       name: "Acemi Pin",
       email: "acemi@lehimhane.local",
       passwordHash,
+      emailVerified: verifiedAt,
       postCount: 1,
       rank: rankFromPostCount(1),
     },
@@ -38,6 +42,7 @@ async function main() {
       name: "STM32 Ustası",
       email: "ustas@lehimhane.local",
       passwordHash,
+      emailVerified: verifiedAt,
       postCount: 75,
       rank: rankFromPostCount(75),
     },
