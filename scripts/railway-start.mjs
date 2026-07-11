@@ -2,25 +2,56 @@ import { mkdirSync } from "fs";
 import path from "path";
 import { spawn } from "child_process";
 
-const dataRoot = process.env.UPLOAD_ROOT
-  ? path.dirname(process.env.UPLOAD_ROOT)
-  : process.env.RAILWAY_VOLUME_MOUNT_PATH ||
-    (process.env.DATABASE_URL?.includes("file:/data/") ? "/data" : null);
+function applyDefaults() {
+  const volume =
+    process.env.RAILWAY_VOLUME_MOUNT_PATH ||
+    (process.env.RAILWAY_ENVIRONMENT ? "/data" : null);
+
+  if (volume) {
+    mkdirSync(volume, { recursive: true });
+    if (!process.env.DATABASE_URL) {
+      process.env.DATABASE_URL = `file:${path.posix.join(volume, "prod.db")}`;
+    }
+    if (!process.env.UPLOAD_ROOT) {
+      process.env.UPLOAD_ROOT = path.posix.join(volume, "uploads");
+    }
+  }
+
+  if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = "file:./prod.db";
+  }
+
+  if (!process.env.NEXTAUTH_SECRET) {
+    console.warn(
+      "NEXTAUTH_SECRET eksik — gecici secret uretildi. Railway Variables'a kalici bir deger ekle.",
+    );
+    process.env.NEXTAUTH_SECRET = `railway-temp-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+  }
+
+  if (!process.env.NEXTAUTH_URL && process.env.RAILWAY_PUBLIC_DOMAIN) {
+    process.env.NEXTAUTH_URL = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  }
+}
 
 function ensureDirs() {
-  const uploadRoot = process.env.UPLOAD_ROOT
-    ? process.env.UPLOAD_ROOT
-    : dataRoot
-      ? path.join(dataRoot, "uploads")
-      : path.join(process.cwd(), "public", "uploads");
+  const uploadRoot =
+    process.env.UPLOAD_ROOT || path.join(process.cwd(), "public", "uploads");
 
+  mkdirSync(uploadRoot, { recursive: true });
   for (const kind of ["avatar", "banner", "attachments", "projects"]) {
     mkdirSync(path.join(uploadRoot, kind), { recursive: true });
   }
 
-  if (!process.env.UPLOAD_ROOT && dataRoot) {
-    process.env.UPLOAD_ROOT = path.join(dataRoot, "uploads");
+  const dbUrl = process.env.DATABASE_URL || "";
+  if (dbUrl.startsWith("file:")) {
+    const dbPath = dbUrl.replace(/^file:/, "");
+    const dbDir = path.dirname(dbPath);
+    if (dbDir && dbDir !== ".") mkdirSync(dbDir, { recursive: true });
   }
+
+  process.env.UPLOAD_ROOT = uploadRoot;
 }
 
 function run(command, args) {
@@ -32,24 +63,42 @@ function run(command, args) {
     });
     child.on("exit", (code) => {
       if (code === 0) resolve(undefined);
-      else reject(new Error(`${command} exited ${code}`));
+      else reject(new Error(`${command} ${args.join(" ")} exited ${code}`));
     });
   });
 }
 
 async function main() {
+  applyDefaults();
   ensureDirs();
+
+  console.log("DATABASE_URL=", process.env.DATABASE_URL);
+  console.log("UPLOAD_ROOT=", process.env.UPLOAD_ROOT);
+  console.log("NEXTAUTH_URL=", process.env.NEXTAUTH_URL || "(unset)");
+
   console.log("Running prisma migrate deploy...");
   await run("npx", ["prisma", "migrate", "deploy"]);
 
   if (process.env.SEED_ON_BOOT === "1") {
     console.log("Seeding database...");
-    await run("npx", ["tsx", "prisma/seed.ts"]);
+    try {
+      await run("npx", ["tsx", "prisma/seed.ts"]);
+    } catch (error) {
+      console.error("Seed failed (continuing):", error);
+    }
   }
 
   const port = process.env.PORT || "3000";
+  const nextBin = path.join(
+    process.cwd(),
+    "node_modules",
+    "next",
+    "dist",
+    "bin",
+    "next",
+  );
   console.log(`Starting Next.js on 0.0.0.0:${port}`);
-  await run("npx", ["next", "start", "-H", "0.0.0.0", "-p", String(port)]);
+  await run(process.execPath, [nextBin, "start", "-H", "0.0.0.0", "-p", String(port)]);
 }
 
 main().catch((error) => {
