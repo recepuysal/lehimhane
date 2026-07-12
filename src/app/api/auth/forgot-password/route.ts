@@ -8,6 +8,7 @@ import {
   issueAuthToken,
 } from "@/lib/auth-tokens";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   email: z.string().trim().email(),
@@ -22,6 +23,18 @@ export async function POST(request: Request) {
     }
 
     const email = parsed.data.email.toLowerCase();
+    const limited = rateLimit(
+      `forgot:${clientIp(request)}:${email}`,
+      5,
+      60 * 60 * 1000,
+    );
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: `Çok fazla istek. ${limited.retryAfterSec} sn sonra tekrar dene.` },
+        { status: 429 },
+      );
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     // Enumeration koruması: her zaman aynı mesaj
@@ -41,11 +54,7 @@ export async function POST(request: Request) {
         1000 * 60 * 60 * 24,
       );
       await sendVerificationEmail(email, `${appBaseUrl()}/dogrula?token=${raw}`);
-      return NextResponse.json({
-        ok: true,
-        message:
-          "Bu hesap henüz doğrulanmamış. Yeni doğrulama maili gönderildi (kayıtlıysa).",
-      });
+      return NextResponse.json(okMessage);
     }
 
     const raw = await issueAuthToken(

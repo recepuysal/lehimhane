@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isMailConfigured } from "@/lib/mail";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -35,7 +36,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Eski kayıtlarda emailVerified boş kalmış olabilir; şifre doğruysa hesabı aç.
+        // Mail servisi açıksa doğrulanmamış hesaba giriş yok.
+        if (isMailConfigured() && !user.emailVerified) {
+          return null;
+        }
+
+        // Lokal / mail kapalı: eski doğrulanmamış kayıtları aç.
         if (!user.emailVerified) {
           await prisma.user.update({
             where: { id: user.id },

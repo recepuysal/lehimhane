@@ -6,7 +6,8 @@ import {
   appBaseUrl,
   issueAuthToken,
 } from "@/lib/auth-tokens";
-import { sendVerificationEmail } from "@/lib/mail";
+import { isMailConfigured, sendVerificationEmail } from "@/lib/mail";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   email: z.string().trim().email(),
@@ -14,6 +15,13 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!isMailConfigured()) {
+      return NextResponse.json(
+        { error: "Mail servisi yapılandırılmamış" },
+        { status: 503 },
+      );
+    }
+
     const body = await request.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
@@ -21,13 +29,25 @@ export async function POST(request: Request) {
     }
 
     const email = parsed.data.email.toLowerCase();
+    const ip = clientIp(request);
+    const limited = rateLimit(`resend:${ip}:${email}`, 3, 15 * 60 * 1000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: `Çok fazla istek. ${limited.retryAfterSec} sn sonra tekrar dene.` },
+        { status: 429 },
+      );
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
 
+    // Enumeration: her zaman aynı genel mesaj
+    const okMessage = {
+      ok: true,
+      message: "Hesap doğrulanmamışsa yeni bağlantı gönderildi. Gelen kutunu kontrol et.",
+    };
+
     if (!user) {
-      return NextResponse.json({
-        ok: true,
-        message: "Hesap varsa doğrulama bağlantısı hazırlandı.",
-      });
+      return NextResponse.json(okMessage);
     }
 
     if (user.emailVerified) {
@@ -46,20 +66,18 @@ export async function POST(request: Request) {
     const mail = await sendVerificationEmail(email, verifyUrl);
 
     if (!mail.ok) {
-      return NextResponse.json({
-        ok: true,
-        mailSent: false,
-        verifyUrl,
-        message:
-          "Mail şu an gitmiyor (Resend limiti). Doğrulama için bu linke tıkla.",
-      });
+      return NextResponse.json(
+        {
+          error: mail.message ?? "Doğrulama maili gönderilemedi",
+        },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({
       ok: true,
       mailSent: true,
-      verifyUrl,
-      message: "Doğrulama maili gönderildi. Gelmezse alttaki linki kullan.",
+      message: "Doğrulama maili gönderildi. Gelen kutunu ve spam klasörünü kontrol et.",
     });
   } catch {
     return NextResponse.json({ error: "Gönderilemedi" }, { status: 500 });

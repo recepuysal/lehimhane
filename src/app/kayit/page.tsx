@@ -15,6 +15,7 @@ export default async function RegisterPage() {
       <h1>Kayıt ol</h1>
       <p className="muted">
         Hesap oluştur, Acemi Pin olarak başla; yazdıkça rütben yükselir.
+        Kayıttan sonra e-posta doğrulaması gerekir.
       </p>
       <RegisterForm />
     </div>

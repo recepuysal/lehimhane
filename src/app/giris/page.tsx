@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -14,7 +15,9 @@ export default async function LoginPage() {
     <div className="auth-shell">
       <h1>Giriş yap</h1>
       <p className="muted">Demo: demo@lehimhane.local / demo1234</p>
-      <LoginForm />
+      <Suspense fallback={<p className="muted">Yükleniyor...</p>}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }

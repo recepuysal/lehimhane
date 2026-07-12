@@ -54,12 +54,21 @@ NEXTAUTH_URL=https://SENIN-PROJE.up.railway.app
 NEXTAUTH_SECRET=buraya-uzun-rastgele-yazi
 UPLOAD_ROOT=/data/uploads
 SEED_ON_BOOT=1
+RESEND_API_KEY=re_xxxxxxxx
+EMAIL_FROM=Lehimhane <onboarding@resend.dev>
 ```
 
 4. Deploy bitsin → Settings’ten public domain’i kopyala → `NEXTAUTH_URL`’yi o adresle güncelle → bir kez Redeploy
 5. İlk açılışta demo: `demo@lehimhane.local` / `demo1234` (`SEED_ON_BOOT=1` ile)
 
 `SEED_ON_BOOT` ilk kurulumdan sonra `0` yapman yeterli.
+
+### E-posta (Resend)
+
+- `RESEND_API_KEY` tanımlıysa kayıt sonrası **e-posta doğrulama zorunlu** olur; şifre sıfırlama mailleri de gönderilir.
+- Domain doğrulanana kadar `EMAIL_FROM` olarak `Lehimhane <onboarding@resend.dev>` kullan; Resend bu durumda genelde yalnızca hesap e-postana gönderir.
+- Kendi domain’in hazır olunca Resend → Domains’de SPF/DKIM doğrula ve örn. `EMAIL_FROM=Lehimhane <noreply@lehimhane.com>` yap.
+- API anahtarını koda veya GitHub’a yazma; yalnızca Railway Variables’a koy.
 
 ## Demo hesap
 

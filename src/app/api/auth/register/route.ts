@@ -8,7 +8,8 @@ import {
   appBaseUrl,
   issueAuthToken,
 } from "@/lib/auth-tokens";
-import { sendVerificationEmail } from "@/lib/mail";
+import { isMailConfigured, sendVerificationEmail } from "@/lib/mail";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "İsim en az 2 karakter olmalı").max(50),
@@ -18,6 +19,14 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const limited = rateLimit(`register:${clientIp(request)}`, 8, 60 * 60 * 1000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: `Çok fazla deneme. ${limited.retryAfterSec} sn sonra tekrar dene.` },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
     const parsed = registerSchema.safeParse(body);
 
@@ -40,38 +49,61 @@ export async function POST(request: Request) {
 
     const passwordHash = await hash(parsed.data.password, 10);
     const rank = rankFromPostCount(0);
+    const requireVerify = isMailConfigured();
 
-    // Resend domain yokken mail doğrulaması zorunlu değil; hesap hemen aktif.
     const user = await prisma.user.create({
       data: {
         name: parsed.data.name,
         email,
         passwordHash,
-        emailVerified: new Date(),
+        emailVerified: requireVerify ? null : new Date(),
         postCount: 0,
         rank,
       },
       select: { id: true, name: true, email: true, rank: true },
     });
 
-    // İleride domain bağlanınca mail çalışsın diye arka planda dene (başarısız olsa sorun değil).
-    try {
-      const rawToken = await issueAuthToken(
-        user.id,
-        TOKEN_EMAIL_VERIFY,
-        1000 * 60 * 60 * 24,
+    if (!requireVerify) {
+      return NextResponse.json(
+        {
+          user,
+          needsVerification: false,
+          message: "Kayıt tamam. Giriş yapabilirsin.",
+        },
+        { status: 201 },
       );
-      const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
-      await sendVerificationEmail(email, verifyUrl);
-    } catch (error) {
-      console.warn("[register] optional mail skipped:", error);
+    }
+
+    const rawToken = await issueAuthToken(
+      user.id,
+      TOKEN_EMAIL_VERIFY,
+      1000 * 60 * 60 * 24,
+    );
+    const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
+    const mail = await sendVerificationEmail(email, verifyUrl);
+
+    if (!mail.ok) {
+      return NextResponse.json(
+        {
+          user,
+          needsVerification: true,
+          mailSent: false,
+          message:
+            mail.skipped
+              ? "Hesap oluştu ama mail servisi yapılandırılmamış. Yöneticiye bildir."
+              : `Hesap oluştu ama doğrulama maili gönderilemedi: ${mail.message ?? "bilinmeyen hata"}. Giriş sayfasından yeniden göndermeyi dene.`,
+        },
+        { status: 201 },
+      );
     }
 
     return NextResponse.json(
       {
         user,
-        needsVerification: false,
-        message: "Kayıt tamam. Giriş yapabilirsin.",
+        needsVerification: true,
+        mailSent: true,
+        message:
+          "Kayıt tamam. Giriş yapmadan önce e-postandaki doğrulama bağlantısına tıkla.",
       },
       { status: 201 },
     );
