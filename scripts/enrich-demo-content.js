@@ -10,7 +10,7 @@ const DEMO_PROJECTS = [
     body: "Bu projede Arduino Uno ile bir LED'e PWM uygulayarak nefes alan bir ışık efekti oluşturuyoruz.\n\n**Gerekenler:** Uno, LED, 220Ω direnç, breadboard.",
     platform: "Arduino",
     status: "bitti",
-    coverUrl: "/demo/arduino.svg",
+    coverUrl: "/demo/arduino.jpg",
     stepTitle: "Bağlantı ve kod",
     stepBody:
       "LED anodu D9'a, katodu direnç üzerinden GND'ye. `analogWrite` ile 0–255 arasında salınım yaptır.",
@@ -22,7 +22,7 @@ const DEMO_PROJECTS = [
     body: "STM32F103 (Blue Pill) kartında ilk blink projesi.\n\nCubeMX'te PC13'ü GPIO_Output yap, HAL_GPIO_TogglePin ile döngü kur.",
     platform: "STM32",
     status: "devam",
-    coverUrl: "/demo/stm32.svg",
+    coverUrl: "/demo/stm32.jpg",
     stepTitle: "CubeMX ayarı",
     stepBody:
       "SYS → Debug: Serial Wire. PC13 output. Generate code, main while içinde 200ms delay + toggle.",
@@ -34,7 +34,7 @@ const DEMO_PROJECTS = [
     body: "Pi 4 üzerinde bir röle modülünü güvenli şekilde sürmek için temel adımlar.\n\n**Uyarı:** Şebeke tarafına dokunmadan önce izolasyonu doğrula.",
     platform: "Raspberry Pi",
     status: "fikir",
-    coverUrl: "/demo/raspberry-pi.svg",
+    coverUrl: "/demo/raspberry-pi.jpg",
     stepTitle: "Python ile pin aç/kapa",
     stepBody:
       "`gpiozero` veya RPi.GPIO ile OUT pin. Aktif-low rölelerde invert mantığına dikkat et.",
@@ -146,12 +146,12 @@ async function main() {
   for (const project of bare) {
     const cover =
       project.platform === "Arduino"
-        ? "/demo/arduino.svg"
+        ? "/demo/arduino.jpg"
         : project.platform === "STM32"
-          ? "/demo/stm32.svg"
+          ? "/demo/stm32.jpg"
           : project.platform === "Raspberry Pi"
-            ? "/demo/raspberry-pi.svg"
-            : "/demo/pcb.svg";
+            ? "/demo/raspberry-pi.jpg"
+            : "/demo/pcb.jpg";
     await prisma.project.update({
       where: { id: project.id },
       data: { coverUrl: cover },

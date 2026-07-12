@@ -29,18 +29,48 @@ async function main() {
   const force = process.env.SEED_ON_BOOT === "1";
   const prisma = new PrismaClient();
 
-  let categoryCount = 0;
   try {
-    categoryCount = await prisma.category.count();
+    // Eski SVG placeholder yollarını orijinal JPG'lere çevir
+    const withSvg = await prisma.project.findMany({
+      where: { coverUrl: { endsWith: ".svg" } },
+      select: { id: true, coverUrl: true },
+    });
+    for (const project of withSvg) {
+      const nextUrl = project.coverUrl.replace(/\.svg$/i, ".jpg");
+      await prisma.project.update({
+        where: { id: project.id },
+        data: { coverUrl: nextUrl },
+      });
+    }
+    if (withSvg.length > 0) {
+      console.log(`Updated ${withSvg.length} project cover URL(s) .svg → .jpg`);
+    }
+
+    const stepsWithSvg = await prisma.projectStep.findMany({
+      where: { imageUrl: { endsWith: ".svg" } },
+      select: { id: true, imageUrl: true },
+    });
+    for (const step of stepsWithSvg) {
+      if (!step.imageUrl) continue;
+      await prisma.projectStep.update({
+        where: { id: step.id },
+        data: { imageUrl: step.imageUrl.replace(/\.svg$/i, ".jpg") },
+      });
+    }
+    if (stepsWithSvg.length > 0) {
+      console.log(`Updated ${stepsWithSvg.length} step image URL(s) .svg → .jpg`);
+    }
+
+    const categoryCount = await prisma.category.count();
+
+    if (!force && categoryCount > 0) {
+      console.log(
+        `Database already has ${categoryCount} categories — skipping seed.`,
+      );
+      return;
+    }
   } finally {
     await prisma.$disconnect();
-  }
-
-  if (!force && categoryCount > 0) {
-    console.log(
-      `Database already has ${categoryCount} categories — skipping seed.`,
-    );
-    return;
   }
 
   if (force) {
