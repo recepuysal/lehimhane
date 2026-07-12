@@ -102,10 +102,11 @@ export default async function HomePage() {
               <li key={project.id}>
                 <Link href={`/projeler/${project.id}`} className="thread-item project-home-item">
                   {project.coverUrl ? (
-                    <div
-                      className="category-thumb"
-                      style={{ backgroundImage: `url(${project.coverUrl})` }}
-                      aria-hidden
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={project.coverUrl}
+                      alt=""
+                      className="category-thumb category-thumb-img"
                     />
                   ) : null}
                   <div>

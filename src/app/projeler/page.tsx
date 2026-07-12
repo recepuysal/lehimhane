@@ -79,14 +79,12 @@ export default async function ProjectsPage({ searchParams }: Props) {
               href={`/projeler/${project.id}`}
               className="instructable-card"
             >
-              <div
-                className="instructable-card-cover"
-                style={
-                  project.coverUrl
-                    ? { backgroundImage: `url(${project.coverUrl})` }
-                    : undefined
-                }
-              />
+              <div className="instructable-card-cover">
+                {project.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={project.coverUrl} alt="" />
+                ) : null}
+              </div>
               <div className="instructable-card-body">
                 <div className="item-meta item-meta-row">
                   <span>{project.platform}</span>

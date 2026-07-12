@@ -65,7 +65,7 @@ Dallas/Maxim’in **1-Wire** protokolüyle çalışan dijital sıcaklık sensör
 **Durum:** tamamlandı (bitti).`,
   platform: "Arduino",
   status: "bitti",
-  coverUrl: "/demo/ds18b20-wiring.svg",
+  coverUrl: "/demo/arduino.jpg",
   steps: [
     {
       order: 1,
