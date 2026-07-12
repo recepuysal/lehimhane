@@ -11,6 +11,7 @@ export function RegisterForm() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [mailSent, setMailSent] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -43,7 +44,12 @@ export function RegisterForm() {
     if (data.needsVerification) {
       setLoading(false);
       setPendingEmail(payload.email);
+      setMailSent(Boolean(data.mailSent));
       setSuccess(data.message ?? "Doğrulama maili gönderildi.");
+      if (!data.mailSent) {
+        setError(data.message ?? "Doğrulama maili gönderilemedi.");
+        setSuccess("");
+      }
       return;
     }
 
@@ -77,8 +83,11 @@ export function RegisterForm() {
       const data = await response.json();
       if (!response.ok) {
         setError(data.error ?? "Mail gönderilemedi");
+        setMailSent(false);
       } else {
         setSuccess(data.message ?? "Doğrulama maili yeniden gönderildi.");
+        setMailSent(true);
+        setError("");
       }
     } finally {
       setResendBusy(false);
@@ -91,8 +100,19 @@ export function RegisterForm() {
         {success ? <p className="form-success">{success}</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
         <p className="form-meta">
-          <strong>{pendingEmail}</strong> adresine doğrulama maili gönderildi.
-          Bağlantıya tıkladıktan sonra giriş yapabilirsin.
+          {mailSent ? (
+            <>
+              <strong>{pendingEmail}</strong> adresine doğrulama maili
+              gönderildi. Bağlantıya tıkladıktan sonra giriş yapabilirsin.
+            </>
+          ) : (
+            <>
+              Hesap oluşturuldu ama mail henüz gitmedi. Aşağıdan yeniden
+              göndermeyi dene. Railway’de{" "}
+              <code>EMAIL_FROM</code> değerinin tam olarak şöyle olduğundan emin
+              ol: <code>Lehimhane &lt;onboarding@resend.dev&gt;</code>
+            </>
+          )}
         </p>
         <button
           className="btn btn-primary btn-block"

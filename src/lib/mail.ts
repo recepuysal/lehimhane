@@ -1,8 +1,35 @@
 import { Resend } from "resend";
 
+const DEFAULT_FROM = "Lehimhane <onboarding@resend.dev>";
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
-const emailFrom =
-  process.env.EMAIL_FROM?.trim() || "Lehimhane <onboarding@resend.dev>";
+
+/** Railway'de tırnak/boşluk hatalarını temizle; geçersizse varsayılana düş. */
+export function resolveEmailFrom(raw = process.env.EMAIL_FROM) {
+  let value = (raw ?? "").trim();
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1).trim();
+  }
+  // Tipik kopyala-yapıştır hataları
+  value = value.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+
+  const plainEmail = /^[^\s<>]+@[^\s<>]+\.[^\s<>]+$/;
+  const namedEmail = /^[^<>]+<[^\s<>]+@[^\s<>]+\.[^\s<>]+>$/;
+
+  if (plainEmail.test(value) || namedEmail.test(value)) {
+    return value;
+  }
+
+  if (value) {
+    console.warn(
+      `[mail] EMAIL_FROM geçersiz ("${raw}") — varsayılan kullanılıyor: ${DEFAULT_FROM}`,
+    );
+  }
+
+  return DEFAULT_FROM;
+}
 
 /** Resend API key tanımlıysa üretim mail modu (doğrulama zorunlu). */
 export function isMailConfigured() {
@@ -63,7 +90,7 @@ export async function sendMail(options: {
   }
 
   const result = await client.emails.send({
-    from: emailFrom,
+    from: resolveEmailFrom(),
     to: options.to,
     subject: options.subject,
     html: options.html,
