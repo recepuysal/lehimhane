@@ -8,17 +8,11 @@ import Link from "next/link";
 export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState("");
-  const [mailSent, setMailSent] = useState(false);
-  const [verifyUrl, setVerifyUrl] = useState("");
-  const [resendBusy, setResendBusy] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setSuccess("");
     setLoading(true);
 
     const form = new FormData(event.currentTarget);
@@ -42,21 +36,6 @@ export function RegisterForm() {
       return;
     }
 
-    if (data.needsVerification) {
-      setLoading(false);
-      setPendingEmail(payload.email);
-      setMailSent(Boolean(data.mailSent));
-      setVerifyUrl(typeof data.verifyUrl === "string" ? data.verifyUrl : "");
-      if (data.mailSent) {
-        setSuccess(data.message ?? "Doğrulama maili gönderildi.");
-        setError("");
-      } else {
-        setError(data.message ?? "Doğrulama maili gönderilemedi.");
-        setSuccess("");
-      }
-      return;
-    }
-
     const result = await signIn("credentials", {
       email: payload.email,
       password: payload.password,
@@ -66,75 +45,12 @@ export function RegisterForm() {
     setLoading(false);
 
     if (result?.error) {
-      setSuccess("Kayıt oldu. Şimdi giriş sayfasından girebilirsin.");
+      setError("Kayıt oldu. Şimdi giriş sayfasından girebilirsin.");
       return;
     }
 
     router.push("/");
     router.refresh();
-  }
-
-  async function resendVerification() {
-    if (!pendingEmail) return;
-    setResendBusy(true);
-    setError("");
-    try {
-      const response = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: pendingEmail }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error ?? "Mail gönderilemedi");
-        setMailSent(false);
-      } else {
-        setSuccess(data.message ?? "Doğrulama maili yeniden gönderildi.");
-        setMailSent(true);
-        setError("");
-      }
-    } finally {
-      setResendBusy(false);
-    }
-  }
-
-  if (pendingEmail) {
-    return (
-      <div className="auth-form">
-        {success ? <p className="form-success">{success}</p> : null}
-        {error ? <p className="form-error">{error}</p> : null}
-        <p className="form-meta">
-          {mailSent ? (
-            <>
-              <strong>{pendingEmail}</strong> adresine doğrulama maili
-              gönderildi. Bağlantıya tıkladıktan sonra giriş yapabilirsin.
-            </>
-          ) : (
-            <>
-              Hesap oluşturuldu. Mail şu an dış adreslere gitmiyor (Resend
-              domain doğrulaması gerekli).
-            </>
-          )}
-        </p>
-        {verifyUrl ? (
-          <p className="form-meta">
-            Geçici doğrulama linki:{" "}
-            <a href={verifyUrl}>Hesabı doğrula</a>
-          </p>
-        ) : null}
-        <button
-          className="btn btn-primary btn-block"
-          type="button"
-          disabled={resendBusy}
-          onClick={() => void resendVerification()}
-        >
-          {resendBusy ? "Gönderiliyor..." : "Doğrulama mailini yeniden gönder"}
-        </button>
-        <p className="form-meta">
-          <Link href="/giris">Giriş sayfasına git</Link>
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -158,7 +74,6 @@ export function RegisterForm() {
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
-      {success ? <p className="form-success">{success}</p> : null}
       <button className="btn btn-primary btn-block" type="submit" disabled={loading}>
         {loading ? "Kaydediliyor..." : "Kayıt ol"}
       </button>

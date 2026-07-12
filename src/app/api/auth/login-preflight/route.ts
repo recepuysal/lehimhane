@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { isMailConfigured } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
@@ -33,18 +32,6 @@ export async function POST(request: Request) {
     const valid = await compare(parsed.data.password, user.passwordHash);
     if (!valid) {
       return NextResponse.json({ error: "INVALID" }, { status: 401 });
-    }
-
-    if (isMailConfigured() && !user.emailVerified) {
-      return NextResponse.json(
-        {
-          error: "UNVERIFIED",
-          needsVerification: true,
-          message:
-            "E-posta henüz doğrulanmamış. Gelen kutunu kontrol et veya doğrulama mailini yeniden gönder.",
-        },
-        { status: 403 },
-      );
     }
 
     return NextResponse.json({ ok: true });

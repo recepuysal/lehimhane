@@ -3,12 +3,6 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rankFromPostCount } from "@/lib/ranks";
-import {
-  TOKEN_EMAIL_VERIFY,
-  appBaseUrl,
-  issueAuthToken,
-} from "@/lib/auth-tokens";
-import { isMailConfigured, sendVerificationEmail } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
@@ -17,6 +11,11 @@ const registerSchema = z.object({
   password: z.string().min(6, "Şifre en az 6 karakter olmalı").max(100),
 });
 
+/**
+ * Klasik forum kaydı (phpBB / çoğu hobici forumu gibi):
+ * e-posta + şifre → hesap hemen açık → giriş.
+ * Domain/Resend doğrulama engeli yok.
+ */
 export async function POST(request: Request) {
   try {
     const limited = rateLimit(`register:${clientIp(request)}`, 8, 60 * 60 * 1000);
@@ -49,69 +48,24 @@ export async function POST(request: Request) {
 
     const passwordHash = await hash(parsed.data.password, 10);
     const rank = rankFromPostCount(0);
-    const requireVerify = isMailConfigured();
 
     const user = await prisma.user.create({
       data: {
         name: parsed.data.name,
         email,
         passwordHash,
-        emailVerified: requireVerify ? null : new Date(),
+        emailVerified: new Date(),
         postCount: 0,
         rank,
       },
       select: { id: true, name: true, email: true, rank: true },
     });
 
-    if (!requireVerify) {
-      return NextResponse.json(
-        {
-          user,
-          needsVerification: false,
-          message: "Kayıt tamam. Giriş yapabilirsin.",
-        },
-        { status: 201 },
-      );
-    }
-
-    const rawToken = await issueAuthToken(
-      user.id,
-      TOKEN_EMAIL_VERIFY,
-      1000 * 60 * 60 * 24,
-    );
-    const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
-    const mail = await sendVerificationEmail(email, verifyUrl);
-
-    if (!mail.ok) {
-      // Domain doğrulanmadan Resend dış e-postaya gitmez; kayıt olan kişi
-      // kilitlenmesin diye yalnızca bu durumda tek kullanımlık linki göster.
-      const showVerifyLink =
-        !mail.skipped &&
-        "code" in mail &&
-        mail.code === "DOMAIN_REQUIRED";
-
-      return NextResponse.json(
-        {
-          user,
-          needsVerification: true,
-          mailSent: false,
-          ...(showVerifyLink ? { verifyUrl } : {}),
-          message: mail.skipped
-            ? "Hesap oluştu ama mail servisi yapılandırılmamış. Yöneticiye bildir."
-            : mail.message ??
-              "Hesap oluştu ama doğrulama maili gönderilemedi. Yeniden göndermeyi dene.",
-        },
-        { status: 201 },
-      );
-    }
-
     return NextResponse.json(
       {
         user,
-        needsVerification: true,
-        mailSent: true,
-        message:
-          "Kayıt tamam. Giriş yapmadan önce e-postandaki doğrulama bağlantısına tıkla.",
+        needsVerification: false,
+        message: "Kayıt tamam. Giriş yapılıyor…",
       },
       { status: 201 },
     );

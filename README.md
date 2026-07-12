@@ -68,7 +68,8 @@ Sadece adres de olur: `onboarding@resend.dev`
 
 ### E-posta (Resend)
 
-- `RESEND_API_KEY` tanımlıysa kayıt sonrası **e-posta doğrulama zorunlu** olur; şifre sıfırlama mailleri de gönderilir.
+- `RESEND_API_KEY` tanımlıysa **şifremi unuttum** mailleri gönderilir.
+- Kayıt klasik forum gibi çalışır: e-posta + şifre → hemen giriş (zorunlu doğrulama maili yok).
 - Domain doğrulanana kadar gönderen: `Lehimhane <onboarding@resend.dev>` (veya sadece `onboarding@resend.dev`).
 - Kendi domain’in hazır olunca Resend → Domains’de SPF/DKIM doğrula ve örn. `EMAIL_FROM=Lehimhane <noreply@lehimhane.com>` yap.
 - API anahtarını koda veya GitHub’a yazma; yalnızca Railway Variables’a koy.
