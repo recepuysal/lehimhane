@@ -126,7 +126,8 @@ a:hover {
   flex: 1 1 auto;
 }
 
-.header-account {
+.header-account,
+.header-auth {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -135,6 +136,7 @@ a:hover {
 }
 
 .header-account .btn,
+.header-auth .btn,
 .header-tools .btn {
   height: var(--header-control-h);
   padding-block: 0;
@@ -1901,7 +1903,8 @@ select:focus {
     min-width: 8rem;
   }
 
-  .header-account {
+  .header-account,
+  .header-auth {
     order: 3;
     width: 100%;
     justify-content: flex-end;

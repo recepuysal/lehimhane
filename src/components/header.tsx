@@ -104,6 +104,15 @@ export function Header() {
                 Çıkış
               </button>
             </div>
+          ) : status !== "loading" ? (
+            <div className="header-auth">
+              <Link href="/giris" className="btn btn-ghost">
+                Giriş Yap
+              </Link>
+              <Link href="/kayit" className="btn btn-primary">
+                Kayıt Ol
+              </Link>
+            </div>
           ) : null}
 
           <div className="header-menu" ref={menuRef}>
