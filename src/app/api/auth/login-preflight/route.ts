@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { isMailConfigured } from "@/lib/mail";
+import { requiresEmailVerification } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "INVALID" }, { status: 401 });
     }
 
-    if (isMailConfigured() && !user.emailVerified) {
+    if (requiresEmailVerification() && !user.emailVerified) {
       return NextResponse.json(
         {
           error: "UNVERIFIED",
