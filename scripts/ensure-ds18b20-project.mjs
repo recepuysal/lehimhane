@@ -65,7 +65,7 @@ Dallas/Maxim’in **1-Wire** protokolüyle çalışan dijital sıcaklık sensör
 **Durum:** tamamlandı (bitti).`,
   platform: "Arduino",
   status: "bitti",
-  coverUrl: "/demo/arduino.jpg",
+  coverUrl: "/demo/ds18b20.png",
   steps: [
     {
       order: 1,
@@ -79,7 +79,7 @@ Dallas/Maxim’in **1-Wire** protokolüyle çalışan dijital sıcaklık sensör
 | **GND** | Toprak |
 
 Parazit güçlü (parasite power) modda VDD’yi GND’ye bağlayan kablolama da vardır; bu projede **normal 3 telli** besleme kullanıyoruz (daha güvenilir).`,
-      imageUrl: "/demo/ds18b20-sensor.svg",
+      imageUrl: "/demo/ds18b20.png",
     },
     {
       order: 2,
@@ -92,7 +92,7 @@ Parazit güçlü (parasite power) modda VDD’yi GND’ye bağlayan kablolama da
 4. **4.7kΩ** direnci **DQ ile 5V arasına** (pull-up) — **zorunlu**. Yoksa iletişim düşer.
 
 İpucu: Su geçirmez kabloluda genelde kırmızı=VDD, sarı/beyaz=DQ, siyah=GND olur; üretici etiketine bak.`,
-      imageUrl: "/demo/ds18b20-wiring.svg",
+      imageUrl: "/demo/ds18b20-wiring.png",
     },
     {
       order: 3,
@@ -113,7 +113,7 @@ Parazit güçlü (parasite power) modda VDD’yi GND’ye bağlayan kablolama da
 ${CODE}
 
 \`DEVICE_DISCONNECTED_C\` (−127) gelirse kablo veya pull-up’ı kontrol et.`,
-      imageUrl: "/demo/ds18b20-serial.svg",
+      imageUrl: "/demo/ds18b20-wiring.png",
     },
     {
       order: 5,
@@ -125,7 +125,7 @@ ${CODE}
 Parmakla sensöre dokununca değer yavaşça yükselir; bu da bağlantının doğru olduğunu gösterir.
 
 **Bitti:** Uno + DS18B20 ile temel sıcaklık okuma tamam.`,
-      imageUrl: "/demo/ds18b20-serial.svg",
+      imageUrl: "/demo/ds18b20.png",
     },
   ],
   supplies: [

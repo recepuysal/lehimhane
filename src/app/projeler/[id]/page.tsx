@@ -74,12 +74,16 @@ export default async function ProjectDetailPage({ params }: Props) {
       </div>
 
       <section className="instructable-detail-hero panel">
-        <div className="instructable-detail-cover">
-          {project.coverUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={project.coverUrl} alt={project.title} />
-          ) : null}
-        </div>
+        <div
+          className="instructable-detail-cover"
+          style={
+            project.coverUrl
+              ? { backgroundImage: `url("${project.coverUrl}")` }
+              : undefined
+          }
+          role="img"
+          aria-label={project.title}
+        />
         <div className="instructable-detail-intro">
           <div className="item-meta item-meta-row">
             <span className="tag-chip">{project.platform}</span>
@@ -175,13 +179,15 @@ export default async function ProjectDetailPage({ params }: Props) {
               <h2>{step.title}</h2>
             </div>
             {step.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={step.imageUrl}
-                alt={step.title}
+              <div
                 className={`instructable-step-image${
-                  step.imageUrl.endsWith(".svg") ? " instructable-step-image-diagram" : ""
+                  step.imageUrl.endsWith(".svg")
+                    ? " instructable-step-image-diagram"
+                    : ""
                 }`}
+                style={{ backgroundImage: `url("${step.imageUrl}")` }}
+                role="img"
+                aria-label={step.title}
               />
             ) : null}
             <div className="thread-body">
