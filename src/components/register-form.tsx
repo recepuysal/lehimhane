@@ -13,7 +13,6 @@ export function RegisterForm() {
   const [pendingEmail, setPendingEmail] = useState("");
   const [mailSent, setMailSent] = useState(false);
   const [verifyUrl, setVerifyUrl] = useState("");
-  const [devMode, setDevMode] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -48,15 +47,8 @@ export function RegisterForm() {
       setPendingEmail(payload.email);
       setMailSent(Boolean(data.mailSent));
       setVerifyUrl(typeof data.verifyUrl === "string" ? data.verifyUrl : "");
-      setDevMode(Boolean(data.devMode));
-      if (data.mailSent && !data.devMode) {
+      if (data.mailSent) {
         setSuccess(data.message ?? "Doğrulama maili gönderildi.");
-        setError("");
-      } else if (data.verifyUrl) {
-        setSuccess(
-          data.message ??
-            "Hesap oluştu. Aşağıdaki doğrulama linkine tıkla.",
-        );
         setError("");
       } else {
         setError(data.message ?? "Doğrulama maili gönderilemedi.");
@@ -112,37 +104,32 @@ export function RegisterForm() {
         {success ? <p className="form-success">{success}</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
         <p className="form-meta">
-          {mailSent && !devMode ? (
+          {mailSent ? (
             <>
               <strong>{pendingEmail}</strong> adresine doğrulama maili
               gönderildi. Bağlantıya tıkladıktan sonra giriş yapabilirsin.
             </>
           ) : (
             <>
-              <strong>{pendingEmail}</strong> için hesap oluşturuldu.
-              {devMode
-                ? " Yerel deneme modundasın — mail şart değil."
-                : null}
+              Hesap oluşturuldu. Mail şu an dış adreslere gitmiyor (Resend
+              domain doğrulaması gerekli).
             </>
           )}
         </p>
         {verifyUrl ? (
           <p className="form-meta">
-            <a href={verifyUrl} className="btn btn-primary btn-block">
-              Hesabı doğrula (linke tıkla)
-            </a>
+            Geçici doğrulama linki:{" "}
+            <a href={verifyUrl}>Hesabı doğrula</a>
           </p>
         ) : null}
-        {!devMode ? (
-          <button
-            className="btn btn-ghost btn-block"
-            type="button"
-            disabled={resendBusy}
-            onClick={() => void resendVerification()}
-          >
-            {resendBusy ? "Gönderiliyor..." : "Doğrulama mailini yeniden gönder"}
-          </button>
-        ) : null}
+        <button
+          className="btn btn-primary btn-block"
+          type="button"
+          disabled={resendBusy}
+          onClick={() => void resendVerification()}
+        >
+          {resendBusy ? "Gönderiliyor..." : "Doğrulama mailini yeniden gönder"}
+        </button>
         <p className="form-meta">
           <Link href="/giris">Giriş sayfasına git</Link>
         </p>

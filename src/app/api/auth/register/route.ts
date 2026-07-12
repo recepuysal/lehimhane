@@ -8,12 +8,7 @@ import {
   appBaseUrl,
   issueAuthToken,
 } from "@/lib/auth-tokens";
-import {
-  isMailConfigured,
-  isMailDevMode,
-  requiresEmailVerification,
-  sendVerificationEmail,
-} from "@/lib/mail";
+import { isMailConfigured, sendVerificationEmail } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
@@ -54,7 +49,7 @@ export async function POST(request: Request) {
 
     const passwordHash = await hash(parsed.data.password, 10);
     const rank = rankFromPostCount(0);
-    const requireVerify = requiresEmailVerification();
+    const requireVerify = isMailConfigured();
 
     const user = await prisma.user.create({
       data: {
@@ -85,38 +80,38 @@ export async function POST(request: Request) {
       1000 * 60 * 60 * 24,
     );
     const verifyUrl = `${appBaseUrl()}/dogrula?token=${rawToken}`;
+    const mail = await sendVerificationEmail(email, verifyUrl);
 
-    let mailSent = false;
-    let mailMessage =
-      "Kayıt tamam. Aşağıdaki doğrulama linkine tıkla, sonra giriş yap.";
+    if (!mail.ok) {
+      // Domain doğrulanmadan Resend dış e-postaya gitmez; kayıt olan kişi
+      // kilitlenmesin diye yalnızca bu durumda tek kullanımlık linki göster.
+      const showVerifyLink =
+        !mail.skipped &&
+        "code" in mail &&
+        mail.code === "DOMAIN_REQUIRED";
 
-    if (isMailConfigured()) {
-      const mail = await sendVerificationEmail(email, verifyUrl);
-      mailSent = mail.ok;
-      if (mail.ok) {
-        mailMessage = isMailDevMode()
-          ? "Doğrulama maili gönderildi (mümkünse). Yerel denemede linki de aşağıda görüyorsun."
-          : "Kayıt tamam. Giriş yapmadan önce e-postandaki doğrulama bağlantısına tıkla.";
-      } else if (!mail.skipped && "message" in mail) {
-        mailMessage = mail.message ?? mailMessage;
-      }
-    } else if (isMailDevMode()) {
-      console.warn("[register] MAIL_DEV_MODE — mail yok, verifyUrl sayfada:");
-      console.warn(verifyUrl);
-      mailMessage =
-        "Yerel deneme modu: mail servisi yok. Aşağıdaki linke tıklayarak hesabını doğrula.";
+      return NextResponse.json(
+        {
+          user,
+          needsVerification: true,
+          mailSent: false,
+          ...(showVerifyLink ? { verifyUrl } : {}),
+          message: mail.skipped
+            ? "Hesap oluştu ama mail servisi yapılandırılmamış. Yöneticiye bildir."
+            : mail.message ??
+              "Hesap oluştu ama doğrulama maili gönderilemedi. Yeniden göndermeyi dene.",
+        },
+        { status: 201 },
+      );
     }
-
-    const exposeLink = isMailDevMode() || !mailSent;
 
     return NextResponse.json(
       {
         user,
         needsVerification: true,
-        mailSent,
-        ...(exposeLink ? { verifyUrl } : {}),
-        message: mailMessage,
-        devMode: isMailDevMode(),
+        mailSent: true,
+        message:
+          "Kayıt tamam. Giriş yapmadan önce e-postandaki doğrulama bağlantısına tıkla.",
       },
       { status: 201 },
     );

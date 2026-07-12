@@ -42,21 +42,6 @@ Mevcut DB’ye örnek proje eklemek için (veri silmez):
 node scripts/enrich-demo-content.js
 ```
 
-### Yerel PC denemesi (domain / Railway şart değil)
-
-LabStock’taki gibi PC’de çalıştırırsın; bilgisayar kapanınca site de kapanır.
-
-```bash
-npm install
-npx prisma migrate dev
-npm run db:seed
-npm run dev
-```
-
-Tarayıcı: [http://localhost:3000](http://localhost:3000)
-
-`.env.local` içinde `MAIL_DEV_MODE=1` varken kayıt sonrası **doğrulama linki sayfada** çıkar (Resend domain gerekmez). İstersen `RESEND_API_KEY` ekleyerek kendi iCloud’una mail de deneyebilirsin.
-
 ## Railway ile yayın
 
 1. Railway → **New Project** → **Deploy from GitHub** → `lehimhane`

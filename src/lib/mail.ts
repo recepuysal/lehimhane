@@ -31,31 +31,9 @@ export function resolveEmailFrom(raw = process.env.EMAIL_FROM) {
   return DEFAULT_FROM;
 }
 
-/** Resend API key tanımlıysa bulut mail hazır. */
+/** Resend API key tanımlıysa üretim mail modu (doğrulama zorunlu). */
 export function isMailConfigured() {
   return Boolean(resendApiKey);
-}
-
-/**
- * LabStock tarzı yerel deneme: PC'de MAIL_DEV_MODE=1 veya development.
- * Mail gitmese bile doğrulama linki sayfada gösterilir; domain şart değil.
- */
-export function isMailDevMode() {
-  return (
-    process.env.MAIL_DEV_MODE === "1" ||
-    process.env.NODE_ENV === "development"
-  );
-}
-
-/** Doğrulama zorunlu mu? (Resend veya yerel deneme modu) */
-export function requiresEmailVerification() {
-  return isMailConfigured() || isMailDevMode();
-}
-
-/** Kayıt yanıtında verifyUrl gösterilsin mi? */
-export function shouldExposeVerifyUrl(mailCode?: string) {
-  if (isMailDevMode()) return true;
-  return mailCode === "DOMAIN_REQUIRED";
 }
 
 function getClient() {
