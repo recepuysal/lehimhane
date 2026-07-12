@@ -36,11 +36,23 @@ export default async function HomePage() {
   return (
     <div className="stack">
       <section className="hero">
-        <h1>Lehimhane</h1>
-        <p>
-          Arduino, Raspberry Pi, STM32, PCB ve hobi elektronik. Konu aç, proje
-          paylaş, rütbeni yükselt.
-        </p>
+        <div className="hero-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/lehimhane-logo.png"
+            alt=""
+            className="hero-logo"
+            width={96}
+            height={96}
+          />
+          <div className="hero-copy">
+            <h1>Lehimhane</h1>
+            <p>
+              Arduino, Raspberry Pi, STM32, PCB ve hobi elektronik. Konu aç,
+              proje paylaş, rütbeni yükselt.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="panel">

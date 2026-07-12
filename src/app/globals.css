@@ -463,6 +463,24 @@ form.header-search .header-search-submit:hover {
   animation: rise 500ms ease both;
 }
 
+.hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.hero-logo {
+  width: clamp(4.5rem, 12vw, 6rem);
+  height: clamp(4.5rem, 12vw, 6rem);
+  object-fit: contain;
+  flex: 0 0 auto;
+  border-radius: 1rem;
+}
+
+.hero-copy {
+  min-width: 0;
+}
+
 .hero h1 {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
@@ -1888,6 +1906,10 @@ select:focus {
     flex-wrap: wrap;
     padding-block: 0.85rem;
     gap: 0.65rem;
+  }
+
+  .hero-brand {
+    gap: 0.9rem;
   }
 
   .header-tools {
