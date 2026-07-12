@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="DS18B20 sensör">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b6e4f"/>
+      <stop offset="100%" stop-color="#083d2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <text x="400" y="48" text-anchor="middle" fill="#e8f5ef" font-family="Georgia, serif" font-size="28" font-weight="700">DS18B20 S1cakl1k Sensörü</text>
+  <!-- TO-92 body -->
+  <ellipse cx="400" cy="220" rx="70" ry="95" fill="#2a2a2a" stroke="#7ec8a3" stroke-width="3"/>
+  <rect x="355" y="280" width="90" height="28" rx="4" fill="#1a1a1a"/>
+  <!-- pins -->
+  <g stroke="#c0c0c0" stroke-width="8" stroke-linecap="round">
+    <line x1="370" y1="308" x2="370" y2="390"/>
+    <line x1="400" y1="308" x2="400" y2="390"/>
+    <line x1="430" y1="308" x2="430" y2="390"/>
+  </g>
+  <text x="370" y="420" text-anchor="middle" fill="#f4c95f" font-family="system-ui,sans-serif" font-size="16" font-weight="700">GND</text>
+  <text x="400" y="420" text-anchor="middle" fill="#f4c95f" font-family="system-ui,sans-serif" font-size="16" font-weight="700">DQ</text>
+  <text x="430" y="420" text-anchor="middle" fill="#f4c95f" font-family="system-ui,sans-serif" font-size="16" font-weight="700">VDD</text>
+  <text x="400" y="470" text-anchor="middle" fill="#cde8dc" font-family="system-ui,sans-serif" font-size="15">1-Wire · 55&+125 °C · ±0.5 °C</text>
+</svg>

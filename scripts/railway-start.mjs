@@ -86,6 +86,13 @@ async function main() {
     console.error("Seed failed (continuing):", error);
   }
 
+  // Demo Arduino projesi (idempotent)
+  try {
+    await run("node", ["scripts/ensure-ds18b20-project.mjs"]);
+  } catch (error) {
+    console.error("DS18B20 project ensure failed (continuing):", error);
+  }
+
   const port = process.env.PORT || "3000";
   const nextBin = path.join(
     process.cwd(),

@@ -13,7 +13,8 @@
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "db:ds18b20": "node scripts/ensure-ds18b20-project.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
