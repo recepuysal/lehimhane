@@ -12,6 +12,7 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
   const [mailSent, setMailSent] = useState(false);
+  const [verifyUrl, setVerifyUrl] = useState("");
   const [resendBusy, setResendBusy] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -45,8 +46,11 @@ export function RegisterForm() {
       setLoading(false);
       setPendingEmail(payload.email);
       setMailSent(Boolean(data.mailSent));
-      setSuccess(data.message ?? "Doğrulama maili gönderildi.");
-      if (!data.mailSent) {
+      setVerifyUrl(typeof data.verifyUrl === "string" ? data.verifyUrl : "");
+      if (data.mailSent) {
+        setSuccess(data.message ?? "Doğrulama maili gönderildi.");
+        setError("");
+      } else {
         setError(data.message ?? "Doğrulama maili gönderilemedi.");
         setSuccess("");
       }
@@ -107,13 +111,17 @@ export function RegisterForm() {
             </>
           ) : (
             <>
-              Hesap oluşturuldu ama mail henüz gitmedi. Aşağıdan yeniden
-              göndermeyi dene. Railway’de{" "}
-              <code>EMAIL_FROM</code> değerinin tam olarak şöyle olduğundan emin
-              ol: <code>Lehimhane &lt;onboarding@resend.dev&gt;</code>
+              Hesap oluşturuldu. Mail şu an dış adreslere gitmiyor (Resend
+              domain doğrulaması gerekli).
             </>
           )}
         </p>
+        {verifyUrl ? (
+          <p className="form-meta">
+            Geçici doğrulama linki:{" "}
+            <a href={verifyUrl}>Hesabı doğrula</a>
+          </p>
+        ) : null}
         <button
           className="btn btn-primary btn-block"
           type="button"

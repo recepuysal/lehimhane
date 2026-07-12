@@ -83,15 +83,23 @@ export async function POST(request: Request) {
     const mail = await sendVerificationEmail(email, verifyUrl);
 
     if (!mail.ok) {
+      // Domain doğrulanmadan Resend dış e-postaya gitmez; kayıt olan kişi
+      // kilitlenmesin diye yalnızca bu durumda tek kullanımlık linki göster.
+      const showVerifyLink =
+        !mail.skipped &&
+        "code" in mail &&
+        mail.code === "DOMAIN_REQUIRED";
+
       return NextResponse.json(
         {
           user,
           needsVerification: true,
           mailSent: false,
-          message:
-            mail.skipped
-              ? "Hesap oluştu ama mail servisi yapılandırılmamış. Yöneticiye bildir."
-              : `Hesap oluştu ama doğrulama maili gönderilemedi: ${mail.message ?? "bilinmeyen hata"}. Giriş sayfasından yeniden göndermeyi dene.`,
+          ...(showVerifyLink ? { verifyUrl } : {}),
+          message: mail.skipped
+            ? "Hesap oluştu ama mail servisi yapılandırılmamış. Yöneticiye bildir."
+            : mail.message ??
+              "Hesap oluştu ama doğrulama maili gönderilemedi. Yeniden göndermeyi dene.",
         },
         { status: 201 },
       );

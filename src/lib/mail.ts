@@ -99,7 +99,7 @@ export async function sendMail(options: {
 
   if (result.error) {
     console.error("[mail] Resend error:", result.error);
-    const message =
+    const raw =
       typeof result.error === "object" &&
       result.error &&
       "message" in result.error
@@ -109,11 +109,45 @@ export async function sendMail(options: {
       ok: false as const,
       skipped: false as const,
       error: result.error,
-      message,
+      message: humanizeMailError(raw),
+      code: classifyMailError(raw),
     };
   }
 
   return { ok: true as const, id: result.data?.id };
+}
+
+function classifyMailError(raw: string) {
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes("only send testing emails") ||
+    lower.includes("verify a domain")
+  ) {
+    return "DOMAIN_REQUIRED" as const;
+  }
+  if (lower.includes("invalid `from`") || lower.includes("invalid from")) {
+    return "INVALID_FROM" as const;
+  }
+  return "UNKNOWN" as const;
+}
+
+function humanizeMailError(raw: string) {
+  const code = classifyMailError(raw);
+  if (code === "DOMAIN_REQUIRED") {
+    return (
+      "Resend henüz test modunda: yalnızca rcpuysl@icloud.com adresine mail gidebilir. " +
+      "Başka e-postalara (Hotmail, Gmail vb.) göndermek için resend.com/domains üzerinden domain doğrula " +
+      "ve EMAIL_FROM değerini o domain’e çevir (örn. Lehimhane <noreply@lehimhane.com>). " +
+      "Şimdilik kendi iCloud adresinle kayıt olabilir veya aşağıdaki doğrulama linkini kullanabilirsin."
+    );
+  }
+  if (code === "INVALID_FROM") {
+    return (
+      "EMAIL_FROM formatı hatalı. Railway’de tırnaksız şu değeri kullan: " +
+      "Lehimhane <onboarding@resend.dev>"
+    );
+  }
+  return raw;
 }
 
 export async function sendVerificationEmail(to: string, verifyUrl: string) {
