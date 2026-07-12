@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { RankBadge } from "@/components/rank-badge";
 import { HeaderSearch } from "@/components/header-search";
+import { isModerator } from "@/lib/moderation";
 
 function UnreadBadge() {
   const { status } = useSession();
@@ -161,6 +162,15 @@ export function Header() {
                       Bildirimler
                       <UnreadBadge />
                     </Link>
+                    {isModerator(session?.user?.role) ? (
+                      <Link
+                        href="/yonetim/uyeler"
+                        role="menuitem"
+                        onClick={closeMenu}
+                      >
+                        Üyeler
+                      </Link>
+                    ) : null}
                   </>
                 ) : (
                   <>
