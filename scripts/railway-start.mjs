@@ -79,13 +79,11 @@ async function main() {
   console.log("Running prisma migrate deploy...");
   await run("npx", ["prisma", "migrate", "deploy"]);
 
-  if (process.env.SEED_ON_BOOT === "1") {
-    console.log("Seeding database...");
-    try {
-      await run("npx", ["tsx", "prisma/seed.ts"]);
-    } catch (error) {
-      console.error("Seed failed (continuing):", error);
-    }
+  // Boş DB → otomatik demo içerik; SEED_ON_BOOT=1 → zorla yeniden seed
+  try {
+    await run("node", ["scripts/seed-if-empty.mjs"]);
+  } catch (error) {
+    console.error("Seed failed (continuing):", error);
   }
 
   const port = process.env.PORT || "3000";

@@ -5,6 +5,19 @@ import { rankFromPostCount } from "../src/lib/ranks";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Bağımlı kayıtlar önce — FK kırılmadan temiz seed
+  await prisma.notification.deleteMany();
+  await prisma.projectComment.deleteMany();
+  await prisma.projectVote.deleteMany();
+  await prisma.projectImage.deleteMany();
+  await prisma.projectStep.deleteMany();
+  await prisma.projectSupply.deleteMany();
+  await prisma.project.deleteMany();
+  await prisma.attachment.deleteMany();
+  await prisma.threadVote.deleteMany();
+  await prisma.replyVote.deleteMany();
+  await prisma.threadTag.deleteMany();
+  await prisma.tag.deleteMany();
   await prisma.authToken.deleteMany();
   await prisma.reply.deleteMany();
   await prisma.thread.deleteMany();
@@ -151,7 +164,7 @@ async function main() {
       body: "Arduino Uno ile PWM LED nefes efekti.\n\n**Gerekenler:** Uno, LED, 220Ω.",
       platform: "Arduino",
       status: "bitti",
-      coverUrl: "/demo/arduino.jpg",
+      coverUrl: "/demo/arduino.svg",
       stepTitle: "Bağlantı ve kod",
       stepBody: "LED D9'a, PWM ile 0–255 salınım.",
     },
@@ -161,7 +174,7 @@ async function main() {
       body: "STM32F103 Blue Pill ilk blink.",
       platform: "STM32",
       status: "devam",
-      coverUrl: "/demo/stm32.jpg",
+      coverUrl: "/demo/stm32.svg",
       stepTitle: "CubeMX ayarı",
       stepBody: "PC13 output, HAL_GPIO_TogglePin + delay.",
     },
@@ -171,7 +184,7 @@ async function main() {
       body: "Pi 4 röle kontrolü. Optocoupler izolasyonuna dikkat.",
       platform: "Raspberry Pi",
       status: "fikir",
-      coverUrl: "/demo/raspberry-pi.jpg",
+      coverUrl: "/demo/raspberry-pi.svg",
       stepTitle: "Python ile pin aç/kapa",
       stepBody: "gpiozero ile OUT pin; aktif-low invert.",
     },

@@ -1,15 +1,15 @@
 /** Kategori slug → demo kapak görseli (şemasız). */
 export const CATEGORY_DEMO_IMAGES: Record<string, string> = {
-  arduino: "/demo/arduino.jpg",
-  "raspberry-pi": "/demo/raspberry-pi.jpg",
-  "stm32-arm": "/demo/stm32.jpg",
-  "pcb-elektronik": "/demo/pcb.jpg",
-  "proje-vitrini": "/demo/proje-vitrini.jpg",
-  genel: "/demo/genel.jpg",
-  "alim-satim": "/demo/alim-satim.jpg",
-  duyurular: "/demo/duyurular.jpg",
+  arduino: "/demo/arduino.svg",
+  "raspberry-pi": "/demo/raspberry-pi.svg",
+  "stm32-arm": "/demo/stm32.svg",
+  "pcb-elektronik": "/demo/pcb.svg",
+  "proje-vitrini": "/demo/proje-vitrini.svg",
+  genel: "/demo/genel.svg",
+  "alim-satim": "/demo/alim-satim.svg",
+  duyurular: "/demo/duyurular.svg",
 };
 
 export function categoryDemoImage(slug: string) {
-  return CATEGORY_DEMO_IMAGES[slug] ?? "/demo/lab-bench.jpg";
+  return CATEGORY_DEMO_IMAGES[slug] ?? "/demo/lab-bench.svg";
 }

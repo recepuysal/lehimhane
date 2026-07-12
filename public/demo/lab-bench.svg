@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Lab">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3d4a45"/>
+      <stop offset="100%" stop-color="#1c2421"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#g)"/>
+  <rect x="80" y="240" width="480" height="40" rx="4" fill="#5c6b63"/>
+  <rect x="140" y="160" width="120" height="80" rx="6" fill="#0b6e4f"/>
+  <rect x="290" y="140" width="100" height="100" rx="6" fill="#2d9b6f"/>
+  <rect x="420" y="170" width="90" height="70" rx="6" fill="#f4c95f" opacity="0.85"/>
+  <text x="320" y="360" text-anchor="middle" fill="#e8f5ef" font-family="Georgia, serif" font-size="26" font-weight="700">Lehimhane</text>
+</svg>
